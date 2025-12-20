@@ -75,8 +75,8 @@ flowchart LR
 
 <div align="center">
 
-![Total Domains](https://img.shields.io/badge/Total_Unique_Domains-3,300,276-8be9fd?style=for-the-badge&labelColor=6272a4)
-![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--20_12:51:04_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
+![Total Domains](https://img.shields.io/badge/Total_Unique_Domains-3,300,854-8be9fd?style=for-the-badge&labelColor=6272a4)
+![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--20_18:21:16_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
 
 <table align="center">
 <thead>
@@ -87,17 +87,17 @@ flowchart LR
 </tr>
 </thead>
 <tbody>
-<tr><td><a href='https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts'>Steven Black's Unified Hosts</a></td><td>88,502</td><td>38,504</td></tr>
-<tr><td><a href='https://big.oisd.nl'>OISD Big List</a></td><td>259,823</td><td>85,845</td></tr>
-<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt'>HaGeZi Multi-pro Extended</a></td><td>328,737</td><td>217,479</td></tr>
-<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt'>HaGeZi Threat Intelligence</a></td><td>624,964</td><td>452,563</td></tr>
-<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/dga30.txt'>HaGeZi DGA 30 Days</a></td><td>2,290,403</td><td>2,270,048</td></tr>
+<tr><td><a href='https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts'>Steven Black's Unified Hosts</a></td><td>88,502</td><td>38,533</td></tr>
+<tr><td><a href='https://big.oisd.nl'>OISD Big List</a></td><td>259,889</td><td>85,851</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt'>HaGeZi Multi-pro Extended</a></td><td>328,737</td><td>217,378</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt'>HaGeZi Threat Intelligence</a></td><td>626,095</td><td>453,071</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/dga30.txt'>HaGeZi DGA 30 Days</a></td><td>2,290,403</td><td>2,269,687</td></tr>
 </tbody>
 </table>
 
 </div>
 
-> [!TIP]
+> [!NOTE]
 > Unique Contribution shows domains that appear only in that specific list. Sources with low unique counts (~50 or less) should be considered for removal as they provide minimal value.
 
 <!-- STATS_END -->
