@@ -263,14 +263,30 @@ def build_stats_table(
     list_stats: dict[str, int],
     unique_contributions: dict[str, int],
 ) -> str:
-    """Builds markdown table rows for statistics."""
+    """Builds HTML table with links for statistics."""
     rows = []
     for blocklist in blocklists:
         name = blocklist["name"]
+        url = blocklist["url"]
         total = list_stats.get(name, 0)
         unique = unique_contributions.get(name, 0)
-        rows.append(f"| {name} | {total:,} | {unique:,} |")
-    return "\n".join(rows)
+        rows.append(
+            f"<tr><td><a href='{url}'>{name}</a></td><td>{total:,}</td><td>{unique:,}</td></tr>"
+        )
+
+    table = f"""<table align="center">
+<thead>
+<tr>
+<th>Source List</th>
+<th>Total Domains</th>
+<th>Unique Contribution</th>
+</tr>
+</thead>
+<tbody>
+{chr(10).join(rows)}
+</tbody>
+</table>"""
+    return table
 
 
 def update_readme(
@@ -304,7 +320,7 @@ def update_readme(
         print("Warning: README.md missing stats markers", file=sys.stderr)
         return
 
-    table_rows = build_stats_table(blocklists, list_stats, unique_contributions)
+    table_html = build_stats_table(blocklists, list_stats, unique_contributions)
 
     # Format timestamp with double-dash date separator for badge display
     # Input: "2025-12-20 11:01:47 UTC" -> Output: "2025--12--20_11:01:47_UTC"
@@ -320,15 +336,12 @@ def update_readme(
 ![Total Domains](https://img.shields.io/badge/Total_Unique_Domains-{total_domains:,}-8be9fd?style=for-the-badge&labelColor=6272a4)
 ![Last Updated](https://img.shields.io/badge/Last_Updated-{last_update_badge}-50fa7b?style=for-the-badge&labelColor=6272a4)
 
+{table_html}
+
 </div>
 
-### Domain Count by Source
-
-Unique Contribution shows domains that appear only in that specific list. Sources with low unique counts (~50 or less) should be considered for removal as they provide minimal value.
-
-| Source List | Total Domains | Unique Contribution |
-| ----------- | ------------- | ------------------- |
-{table_rows}
+> [!NOTE]
+> Unique Contribution shows domains that appear only in that specific list. Sources with low unique counts (~50 or less) should be considered for removal as they provide minimal value.
 
 <!-- STATS_END -->"""
 

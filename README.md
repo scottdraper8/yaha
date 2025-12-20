@@ -74,22 +74,30 @@ flowchart LR
 
 <div align="center">
 
-![Total Domains](https://img.shields.io/badge/Total_Unique_Domains-3,300,276-8be9fd?style=for-the-badge&labelColor=6272a4)
-![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--20_12:31:10_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
+![Total Domains](https://img.shields.io/badge/Total_Unique_Domains-3,299,613-8be9fd?style=for-the-badge&labelColor=6272a4)
+![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--20_12:49:56_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
+
+<table align="center">
+<thead>
+<tr>
+<th>Source List</th>
+<th>Total Domains</th>
+<th>Unique Contribution</th>
+</tr>
+</thead>
+<tbody>
+<tr><td><a href='https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts'>Steven Black's Unified Hosts</a></td><td>88,502</td><td>38,517</td></tr>
+<tr><td><a href='https://big.oisd.nl'>OISD Big List</a></td><td>259,823</td><td>85,802</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt'>HaGeZi Multi-pro Extended</a></td><td>328,109</td><td>216,816</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt'>HaGeZi Threat Intelligence</a></td><td>624,964</td><td>452,349</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/dga30.txt'>HaGeZi DGA 30 Days</a></td><td>2,290,403</td><td>2,270,082</td></tr>
+</tbody>
+</table>
 
 </div>
 
-### Domain Count by Source
-
-Unique Contribution shows domains that appear only in that specific list. Sources with low unique counts (~50 or less) should be considered for removal as they provide minimal value.
-
-| Source List | Total Domains | Unique Contribution |
-| ----------- | ------------- | ------------------- |
-| Steven Black's Unified Hosts | 88,502 | 38,504 |
-| OISD Big List | 259,823 | 85,845 |
-| HaGeZi Multi-pro Extended | 328,737 | 217,479 |
-| HaGeZi Threat Intelligence | 624,964 | 452,563 |
-| HaGeZi DGA 30 Days | 2,290,403 | 2,270,048 |
+> [!NOTE]
+> Unique Contribution shows domains that appear only in that specific list. Sources with low unique counts (~50 or less) should be considered for removal as they provide minimal value.
 
 <!-- STATS_END -->
 
@@ -117,15 +125,6 @@ Each entry requires:
 
 - `name`: Display name for the blocklist
 - `url`: Direct URL to the blocklist file
-
-**Default Sources:**
-
-| Source | URL |
-| ------ | --- |
-| Steven Black's Unified Hosts | [Steven Black Hosts](https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts) |
-| OISD Big List | [OISD](https://big.oisd.nl) |
-| HaGeZi Multi-pro Extended | [HaGeZi Pro](https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt) |
-| HaGeZi Threat Intelligence | [HaGeZi TIF](https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt) |
 
 ### Performance Configuration
 
