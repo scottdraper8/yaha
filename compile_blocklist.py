@@ -317,14 +317,14 @@ def update_readme(
 
 <div align="center">
 
-![Total Domains](https://img.shields.io/badge/Total_Unique_Domains-{total_domains:,}-ff79c6?style=for-the-badge&labelColor=282a36)
-![Last Updated](https://img.shields.io/badge/Last_Updated-{last_update_badge}-bd93f9?style=for-the-badge&labelColor=282a36)
+![Total Domains](https://img.shields.io/badge/Total_Unique_Domains-{total_domains:,}-8be9fd?style=for-the-badge&labelColor=6272a4)
+![Last Updated](https://img.shields.io/badge/Last_Updated-{last_update_badge}-50fa7b?style=for-the-badge&labelColor=6272a4)
 
 </div>
 
 ### Domain Count by Source
 
-Unique Contribution shows domains that appear only in that specific list. A source with 0 unique contributions is entirely covered by other lists.
+Unique Contribution shows domains that appear only in that specific list. Sources with low unique counts (~50 or less) should be considered for removal as they provide minimal value.
 
 | Source List | Total Domains | Unique Contribution |
 | ----------- | ------------- | ------------------- |

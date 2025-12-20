@@ -8,10 +8,6 @@
     "url": "https://big.oisd.nl"
   },
   {
-    "name": "Abuse.ch Malware Blocklist",
-    "url": "https://urlhaus.abuse.ch/downloads/hostfile/"
-  },
-  {
     "name": "HaGeZi Multi-pro Extended",
     "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt"
   },

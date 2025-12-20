@@ -74,22 +74,21 @@ flowchart LR
 
 <div align="center">
 
-![Total Domains](https://img.shields.io/badge/Total_Unique_Domains-1,030,190-ff79c6?style=for-the-badge&labelColor=282a36)
-![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--20_11:10:34_UTC-bd93f9?style=for-the-badge&labelColor=282a36)
+![Total Domains](https://img.shields.io/badge/Total_Unique_Domains-1,029,492-8be9fd?style=for-the-badge&labelColor=6272a4)
+![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--20_11:15:28_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
 
 </div>
 
 ### Domain Count by Source
 
-Unique Contribution shows domains that appear only in that specific list. A source with 0 unique contributions is entirely covered by other lists.
+Unique Contribution shows domains that appear only in that specific list. Sources with low unique counts (~50 or less) should be considered for removal as they provide minimal value.
 
 | Source List | Total Domains | Unique Contribution |
 | ----------- | ------------- | ------------------- |
-| Steven Black's Unified Hosts | 88,502 | 38,947 |
-| OISD Big List | 259,789 | 85,805 |
-| Abuse.ch Malware Blocklist | 810 | 1 |
-| HaGeZi Multi-pro Extended | 328,737 | 217,842 |
-| HaGeZi Threat Intelligence | 624,964 | 466,235 |
+| Steven Black's Unified Hosts | 88,502 | 38,967 |
+| OISD Big List | 259,789 | 85,763 |
+| HaGeZi Multi-pro Extended | 328,109 | 217,145 |
+| HaGeZi Threat Intelligence | 624,964 | 466,005 |
 
 <!-- STATS_END -->
 
@@ -124,7 +123,6 @@ Each entry requires:
 | ------ | --- |
 | Steven Black's Unified Hosts | [Steven Black Hosts](https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts) |
 | OISD Big List | [OISD](https://big.oisd.nl) |
-| Abuse.ch Malware Blocklist | [Abuse.ch](https://urlhaus.abuse.ch/downloads/hostfile/) |
 | HaGeZi Multi-pro Extended | [HaGeZi Pro](https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt) |
 | HaGeZi Threat Intelligence | [HaGeZi TIF](https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt) |
 
@@ -176,5 +174,4 @@ Thanks to the maintainers of the source blocklists:
 
 - [Steven Black](https://github.com/StevenBlack/hosts)
 - [OISD](https://oisd.nl/)
-- [Abuse.ch](https://abuse.ch/)
 - [HaGeZi](https://github.com/hagezi/dns-blocklists)
