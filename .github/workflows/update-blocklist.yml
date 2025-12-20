@@ -1,0 +1,74 @@
+name: Update Blocklist
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run blocklist compiler
+        id: compile
+        run: |
+          python compile_blocklist.py
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet hosts; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No changes detected in hosts file"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Changes detected in hosts file"
+          fi
+
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Count domains in hosts file (excluding comments and empty lines)
+          DOMAIN_COUNT=$(grep -v '^#' hosts | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+
+          git add hosts README.md
+          git commit -m "Update blocklist: ${DOMAIN_COUNT} domains [automated]"
+          git push
+
+      - name: No changes detected
+        if: steps.check_changes.outputs.changed == 'false'
+        run: |
+          echo "Blocklist is up to date. README updated with last run time."
+          # Commit README changes even if hosts file unchanged
+          if ! git diff --quiet README.md; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add README.md
+            git commit -m "Update README: last run timestamp [automated]"
+            git push
+          fi
