@@ -74,8 +74,8 @@ flowchart LR
 
 <div align="center">
 
-![Total Domains](https://img.shields.io/badge/Total_Unique_Domains-1,029,492-8be9fd?style=for-the-badge&labelColor=6272a4)
-![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--20_11:15:28_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
+![Total Domains](https://img.shields.io/badge/Total_Unique_Domains-1,030,189-8be9fd?style=for-the-badge&labelColor=6272a4)
+![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--20_11:16:06_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
 
 </div>
 
@@ -85,10 +85,10 @@ Unique Contribution shows domains that appear only in that specific list. Source
 
 | Source List | Total Domains | Unique Contribution |
 | ----------- | ------------- | ------------------- |
-| Steven Black's Unified Hosts | 88,502 | 38,967 |
-| OISD Big List | 259,789 | 85,763 |
-| HaGeZi Multi-pro Extended | 328,109 | 217,145 |
-| HaGeZi Threat Intelligence | 624,964 | 466,005 |
+| Steven Black's Unified Hosts | 88,502 | 38,954 |
+| OISD Big List | 259,789 | 85,806 |
+| HaGeZi Multi-pro Extended | 328,737 | 217,842 |
+| HaGeZi Threat Intelligence | 624,964 | 466,236 |
 
 <!-- STATS_END -->
 
