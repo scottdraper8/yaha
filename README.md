@@ -74,8 +74,8 @@ flowchart LR
 
 <div align="center">
 
-![Total Domains](https://img.shields.io/badge/Total_Unique_Domains-3,300,778-8be9fd?style=for-the-badge&labelColor=6272a4)
-![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--20_12:13:04_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
+![Total Domains](https://img.shields.io/badge/Total_Unique_Domains-3,300,276-8be9fd?style=for-the-badge&labelColor=6272a4)
+![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--20_12:31:10_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
 
 </div>
 
@@ -85,11 +85,11 @@ Unique Contribution shows domains that appear only in that specific list. Source
 
 | Source List | Total Domains | Unique Contribution |
 | ----------- | ------------- | ------------------- |
-| Steven Black's Unified Hosts | 88,502 | 38,533 |
-| OISD Big List | 259,823 | 85,775 |
-| HaGeZi Multi-pro Extended | 328,737 | 217,378 |
-| HaGeZi Threat Intelligence | 626,095 | 453,065 |
-| HaGeZi DGA 30 Days | 2,290,403 | 2,269,687 |
+| Steven Black's Unified Hosts | 88,502 | 38,504 |
+| OISD Big List | 259,823 | 85,845 |
+| HaGeZi Multi-pro Extended | 328,737 | 217,479 |
+| HaGeZi Threat Intelligence | 624,964 | 452,563 |
+| HaGeZi DGA 30 Days | 2,290,403 | 2,270,048 |
 
 <!-- STATS_END -->
 
