@@ -14,5 +14,9 @@
   {
     "name": "HaGeZi Threat Intelligence",
     "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt"
+  },
+  {
+    "name": "HaGeZi DGA 30 Days",
+    "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/dga30.txt"
   }
 ]
