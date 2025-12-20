@@ -41,8 +41,5 @@ Thumbs.db
 # Logs
 *.log
 
-# Generated hosts file (too large for git)
-hosts
-
 # Ruff cache
 .ruff_cache/

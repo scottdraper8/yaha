@@ -8,6 +8,10 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'blocklists.json'
+      - 'compile_blocklist.py'
+      - '.github/workflows/update-blocklist.yml'
 
 jobs:
   update:
@@ -32,9 +36,17 @@ jobs:
 
       - name: Run blocklist compiler
         id: compile
+        continue-on-error: true
         run: |
           python compile_blocklist.py
-          echo "exit_code=$?" >> $GITHUB_OUTPUT
+          EXIT_CODE=$?
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+          # Exit 0 (no changes) or 1 (updated) are both success
+          if [ $EXIT_CODE -eq 0 ] || [ $EXIT_CODE -eq 1 ]; then
+            exit 0
+          else
+            exit $EXIT_CODE
+          fi
 
       - name: Check for changes
         id: check_changes
