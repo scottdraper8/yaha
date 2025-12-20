@@ -62,11 +62,12 @@ flowchart LR
     style Apps fill:#44475a,stroke:#ffb86c,stroke-width:2px
 ```
 
-**Supported Formats:**
-
-- **Hosts file format**: `0.0.0.0 domain.com` or `127.0.0.1 domain.com`
-- **Raw domain lists**: One domain per line
-- **Adblock Plus filters**: `||domain.com^`
+> [!NOTE]
+> **Supported Formats:**
+>
+> - **Hosts file format**: `0.0.0.0 domain.com` or `127.0.0.1 domain.com`
+> - **Raw domain lists**: One domain per line
+> - **Adblock Plus filters**: `||domain.com^`
 
 <!-- STATS_START -->
 
@@ -96,15 +97,46 @@ flowchart LR
 
 </div>
 
-> [!NOTE]
+> [!TIP]
 > Unique Contribution shows domains that appear only in that specific list. Sources with low unique counts (~50 or less) should be considered for removal as they provide minimal value.
 
 <!-- STATS_END -->
 
-## Development
+---
 
-> [!NOTE]
-> This section is for developers who want to customize or contribute to YAHA.
+> [!IMPORTANT]
+> The section below is ***ONLY*** for developers who want to customize or contribute to YAHA.
+
+## Local Development Setup
+
+**Prerequisites:**
+
+- Python 3.10 or higher
+
+**Clone and setup:**
+
+```bash
+git clone https://github.com/scottdraper8/yaha.git
+cd yaha
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+**Install pre-commit hooks:**
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+**Run locally:**
+
+```bash
+python compile_blocklist.py
+```
+
+This fetches all blocklists, parses and deduplicates domains, generates the hosts file, and updates the README with current statistics.
 
 ### Configuration
 
@@ -135,38 +167,6 @@ In `compile_blocklist.py`, you can adjust these constants:
 
 > [!WARNING]
 > If you add many sources or experience rate limiting, adjust `MAX_WORKERS` to control concurrency.
-
-### Local Development Setup
-
-**Prerequisites:**
-
-- Python 3.10 or higher
-- Git
-
-**Clone and setup:**
-
-```bash
-git clone https://github.com/scottdraper8/yaha.git
-cd yaha
-python3 -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-**Install pre-commit hooks:**
-
-```bash
-pip install pre-commit
-pre-commit install
-```
-
-**Run locally:**
-
-```bash
-python compile_blocklist.py
-```
-
-This fetches all blocklists, parses and deduplicates domains, generates the hosts file, and updates the README with current statistics.
 
 ## Acknowledgments
 
