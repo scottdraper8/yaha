@@ -74,8 +74,8 @@ flowchart LR
 
 <div align="center">
 
-![Total Domains](https://img.shields.io/badge/Total_Unique_Domains-1,029,493-ff79c6?style=for-the-badge&labelColor=282a36)
-![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--20_11:10:02_UTC-bd93f9?style=for-the-badge&labelColor=282a36)
+![Total Domains](https://img.shields.io/badge/Total_Unique_Domains-1,030,190-ff79c6?style=for-the-badge&labelColor=282a36)
+![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--20_11:10:34_UTC-bd93f9?style=for-the-badge&labelColor=282a36)
 
 </div>
 
@@ -85,11 +85,11 @@ Unique Contribution shows domains that appear only in that specific list. A sour
 
 | Source List | Total Domains | Unique Contribution |
 | ----------- | ------------- | ------------------- |
-| Steven Black's Unified Hosts | 88,502 | 38,960 |
-| OISD Big List | 259,789 | 85,762 |
+| Steven Black's Unified Hosts | 88,502 | 38,947 |
+| OISD Big List | 259,789 | 85,805 |
 | Abuse.ch Malware Blocklist | 810 | 1 |
-| HaGeZi Multi-pro Extended | 328,109 | 217,145 |
-| HaGeZi Threat Intelligence | 624,964 | 466,004 |
+| HaGeZi Multi-pro Extended | 328,737 | 217,842 |
+| HaGeZi Threat Intelligence | 624,964 | 466,235 |
 
 <!-- STATS_END -->
 
