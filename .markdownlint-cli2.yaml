@@ -1,27 +1,6 @@
----
-# Markdownlint configuration for YAHA
-
-# Disable line length rule for tables and URLs
+# markdownlint-cli2 configuration
 config:
-  MD013:
-    line_length: 120
-    tables: false
-    code_blocks: false
-
-  # Allow inline HTML for badges and formatting
-  MD033: false
-
-  # Allow duplicate heading content
-  MD024:
-    siblings_only: true
-
-  # Allow trailing punctuation in headers
-  MD026: false
-
-  # Allow multiple blank lines in specific contexts
-  MD012: false
-
-# Ignore specific files
-ignores:
-  - node_modules
-  - .venv
+  MD033: false  # Allow inline HTML
+  MD013: false  # Allow long lines
+  MD041: false  # Allow first line to not be h1 (for centered title)
+  MD059: false  # Allow link text flexibility

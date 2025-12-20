@@ -1,177 +1,180 @@
+<div align="center">
+
 # YAHA - Yet Another Host Aggregator
 
-[![Update Blocklist](https://github.com/YOUR_USERNAME/yaha/actions/workflows/update-blocklist.yml/badge.svg)](https://github.com/YOUR_USERNAME/yaha/actions/workflows/update-blocklist.yml)
+[![Update Blocklist](https://github.com/scottdraper8/yaha/actions/workflows/update-blocklist.yml/badge.svg)](https://github.com/scottdraper8/yaha/actions/workflows/update-blocklist.yml)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/)
+[![pre-commit](https://img.shields.io/badge/pre--commit-v4.5.1-FAB040?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
-> A consolidated Pi-hole blocklist aggregator that compiles multiple trusted sources into a single, deduplicated hosts file.
+---
 
-## 🎯 Overview
+*A blocklist aggregator that compiles multiple sources into a single, deduplicated hosts file.*
+*Perfect for applications like [TrackerControl](https://f-droid.org/packages/net.kollnig.missioncontrol.fdroid/) that only support one custom blocklist URL.*
 
-YAHA automatically fetches, processes, and merges multiple blocklists into one optimized hosts file.
-It eliminates duplicates, tracks domain contributions from each source, and updates every 6 hours via
-GitHub Actions.
+---
 
-### Why YAHA?
+</div>
 
-- **Consolidated Management**: One URL instead of managing multiple blocklist subscriptions
-- **Duplicate Elimination**: Removes redundant entries across lists
-- **Transparency**: See exactly which lists contribute unique domains
-- **Always Fresh**: Automatic updates every 6 hours
-- **Open Source**: Review the code, fork it, customize it
+## Usage
 
-## 📋 Blocklist Sources
+**Raw Hosts File URL:**
 
-This aggregator combines the following trusted blocklists:
+```text
+https://raw.githubusercontent.com/scottdraper8/yaha/main/hosts
+```
 
-| Source | Description | URL |
-|--------|-------------|-----|
-| **Steven Black's Unified Hosts** | Unified hosts with adware and malware | [Link](https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts) |
-| **OISD Big List** | Comprehensive domain blocklist | [Link](https://big.oisd.nl) |
-| **Abuse.ch Malware Blocklist** | Malware and botnet domains | [Link](https://urlhaus.abuse.ch/downloads/hostfile/) |
-| **HaGeZi Multi-pro Extended** | Pro-level extended protection | [Link](https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt) |
-| **HaGeZi Threat Intelligence** | Threat intelligence feeds | [Link](https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt) |
+Copy this URL into any application that supports hosts-based blocking to get unified protection from all configured blocklists.
+
+## How It Works
+
+YAHA runs automatically every 6 hours via GitHub Actions, fetching blocklists concurrently, parsing multiple formats, deduplicating domains, and generating a unified hosts file with statistics.
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': {
+    'primaryColor': '#ff79c6',
+    'secondaryColor': '#bd93f9',
+    'tertiaryColor': '#44475a',
+    'mainBkg': '#282a36',
+    'nodeBorder': '#ff79c6',
+    'clusterBkg': '#44475a',
+    'clusterBorder': '#bd93f9',
+    'textColor': '#f8f8f2'
+}}}%%
+flowchart LR
+    Sources[("📋 Blocklist<br/>Sources")] --> Fetch
+
+    subgraph Process["⚙️ YAHA Processing"]
+        direction LR
+        Fetch["🔄 Concurrent<br/>Fetch"] --> Parse["📝 Parse<br/>Formats"]
+        Parse --> Dedupe["🔍 Deduplicate<br/>Domains"]
+        Dedupe --> Stats["📊 Calculate<br/>Statistics"]
+    end
+
+    Stats --> Output[("📄 Unified<br/>Hosts File")]
+    Stats --> README["📖 Update<br/>README"]
+
+    Output --> Apps["📱 Applications<br/>(TrackerControl, etc)"]
+
+    style Sources fill:#44475a,stroke:#bd93f9,stroke-width:2px
+    style Process fill:#44475a,stroke:#ff79c6,stroke-width:2px
+    style Output fill:#44475a,stroke:#50fa7b,stroke-width:2px
+    style README fill:#44475a,stroke:#8be9fd,stroke-width:2px
+    style Apps fill:#44475a,stroke:#ffb86c,stroke-width:2px
+```
+
+**Supported Formats:**
+
+- **Hosts file format**: `0.0.0.0 domain.com` or `127.0.0.1 domain.com`
+- **Raw domain lists**: One domain per line
+- **Adblock Plus filters**: `||domain.com^`
 
 <!-- STATS_START -->
 
-## 📊 Statistics
+## Latest Run
 
-**Last Updated:** 2025-12-20 09:29:30 UTC
-**Last Run:** 2025-12-20 09:29:30 UTC
-**Total Unique Domains:** 943,737
+<div align="center">
+
+![Total Domains](https://img.shields.io/badge/Total_Unique_Domains-1,029,493-ff79c6?style=for-the-badge&labelColor=282a36)
+![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--20_11:10:02_UTC-bd93f9?style=for-the-badge&labelColor=282a36)
+
+</div>
 
 ### Domain Count by Source
 
+Unique Contribution shows domains that appear only in that specific list. A source with 0 unique contributions is entirely covered by other lists.
+
 | Source List | Total Domains | Unique Contribution |
-|-------------|---------------|---------------------|
-| Steven Black's Unified Hosts | 88,510 | 42,298 |
-| OISD Big List | 0 | 0 |
-| Abuse.ch Malware Blocklist | 0 | 0 |
-| HaGeZi Multi-pro Extended | 328,109 | 262,897 |
-| HaGeZi Threat Intelligence | 624,964 | 550,988 |
+| ----------- | ------------- | ------------------- |
+| Steven Black's Unified Hosts | 88,502 | 38,960 |
+| OISD Big List | 259,789 | 85,762 |
+| Abuse.ch Malware Blocklist | 810 | 1 |
+| HaGeZi Multi-pro Extended | 328,109 | 217,145 |
+| HaGeZi Threat Intelligence | 624,964 | 466,004 |
 
 <!-- STATS_END -->
 
-## 🚀 Usage with Pi-hole
+## Development
 
-### Option 1: Use the Raw GitHub URL
+> [!NOTE]
+> This section is for developers who want to customize or contribute to YAHA.
 
-1. Log into your Pi-hole admin interface
-1. Navigate to **Group Management** → **Adlists**
-1. Add the following URL:
+### Configuration
 
-```text
-https://raw.githubusercontent.com/YOUR_USERNAME/yaha/main/hosts
+Blocklists are configured in `blocklists.json`. The script automatically adapts to any number of blocklists.
+
+**blocklists.json Format:**
+
+```json
+[
+  {
+    "name": "List Name",
+    "url": "https://example.com/blocklist.txt"
+  }
+]
 ```
 
-1. Update gravity: `pihole -g`
+Each entry requires:
 
-### Option 2: Use GitHub Pages (if enabled)
+- `name`: Display name for the blocklist
+- `url`: Direct URL to the blocklist file
 
-```text
-https://YOUR_USERNAME.github.io/yaha/hosts
-```
+**Default Sources:**
 
-## 🛠️ Local Development
+| Source | URL |
+| ------ | --- |
+| Steven Black's Unified Hosts | [Steven Black Hosts](https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts) |
+| OISD Big List | [OISD](https://big.oisd.nl) |
+| Abuse.ch Malware Blocklist | [Abuse.ch](https://urlhaus.abuse.ch/downloads/hostfile/) |
+| HaGeZi Multi-pro Extended | [HaGeZi Pro](https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt) |
+| HaGeZi Threat Intelligence | [HaGeZi TIF](https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt) |
 
-### Prerequisites
+### Performance Configuration
 
-- Python 3.11 or higher
+In `compile_blocklist.py`, you can adjust these constants:
+
+- `MAX_WORKERS = 5`: Maximum concurrent blocklist fetches
+- `REQUEST_TIMEOUT = 30`: Request timeout in seconds
+
+> [!WARNING]
+> If you add many sources or experience rate limiting, adjust `MAX_WORKERS` to control concurrency.
+
+### Local Development Setup
+
+**Prerequisites:**
+
+- Python 3.10 or higher
 - Git
 
-### Setup
-
-1. Clone the repository:
+**Clone and setup:**
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/yaha.git
+git clone https://github.com/scottdraper8/yaha.git
 cd yaha
-```
-
-1. Create and activate virtual environment:
-
-```bash
 python3 -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-```
-
-1. Install dependencies:
-
-```bash
 pip install -r requirements.txt
 ```
 
-1. Install pre-commit hooks:
+**Install pre-commit hooks:**
 
 ```bash
 pip install pre-commit
 pre-commit install
 ```
 
-### Running Manually
-
-Execute the compilation script:
+**Run locally:**
 
 ```bash
 python compile_blocklist.py
 ```
 
-The script will:
+This fetches all blocklists, parses and deduplicates domains, generates the hosts file, and updates the README with current statistics.
 
-- Fetch all blocklists
-- Parse and deduplicate domains
-- Generate the unified `hosts` file
-- Update README with statistics
-- Display analysis of unique contributions per list
+## Acknowledgments
 
-## 🔄 Automation
-
-The blocklist updates automatically every 6 hours via GitHub Actions. The workflow:
-
-1. Fetches all source blocklists
-2. Deduplicates domains
-3. Calculates statistics
-4. Updates the hosts file (if changes detected)
-5. Commits changes with domain count in message
-6. Updates README with latest run timestamp
-
-You can also trigger a manual update from the Actions tab in GitHub.
-
-## 📊 Understanding the Statistics
-
-- **Total Domains**: Total entries before deduplication
-- **Unique Contribution**: Domains that only appear in that specific list
-- **Overlap Analysis**: Helps identify which lists provide redundant coverage
-
-If a list shows 0 unique contributions, it might be entirely covered by other lists and
-could be removed to optimize update times.
-
-## 🤝 Contributing
-
-Contributions are welcome! Feel free to:
-
-- Report issues
-- Suggest new blocklists
-- Improve documentation
-- Submit pull requests
-
-## 📝 License
-
-This project is open source and available under the MIT License.
-
-## ⚠️ Disclaimer
-
-This blocklist aggregator is provided as-is. Always review blocklists before deploying to
-production. False positives may occur. The maintainers are not responsible for blocked or
-unblocked content.
-
-## 🙏 Acknowledgments
-
-Massive thanks to the maintainers of the source blocklists:
+Thanks to the maintainers of the source blocklists:
 
 - [Steven Black](https://github.com/StevenBlack/hosts)
 - [OISD](https://oisd.nl/)
 - [Abuse.ch](https://abuse.ch/)
 - [HaGeZi](https://github.com/hagezi/dns-blocklists)
-
----
-
-## Made with ❤️ for the Pi-hole community
