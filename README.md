@@ -75,8 +75,8 @@ flowchart LR
 
 <div align="center">
 
-![Total Domains](https://img.shields.io/badge/Total_Unique_Domains-3,293,316-8be9fd?style=for-the-badge&labelColor=6272a4)
-![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--21_12:31:20_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
+![Total Domains](https://img.shields.io/badge/Total_Unique_Domains-3,292,593-8be9fd?style=for-the-badge&labelColor=6272a4)
+![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--21_18:22:37_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
 
 <table align="center">
 <thead>
@@ -87,11 +87,11 @@ flowchart LR
 </tr>
 </thead>
 <tbody>
-<tr><td><a href='https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts'>Steven Black's Unified Hosts</a></td><td>88,502</td><td>38,682</td></tr>
-<tr><td><a href='https://big.oisd.nl'>OISD Big List</a></td><td>260,529</td><td>86,094</td></tr>
-<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt'>HaGeZi Multi-pro Extended</a></td><td>329,126</td><td>217,890</td></tr>
-<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt'>HaGeZi Threat Intelligence</a></td><td>626,415</td><td>454,450</td></tr>
-<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/dga30.txt'>HaGeZi DGA 30 Days</a></td><td>2,280,801</td><td>2,260,472</td></tr>
+<tr><td><a href='https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts'>Steven Black's Unified Hosts</a></td><td>88,502</td><td>38,832</td></tr>
+<tr><td><a href='https://big.oisd.nl'>OISD Big List</a></td><td>260,639</td><td>85,790</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt'>HaGeZi Multi-pro Extended</a></td><td>329,005</td><td>217,503</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt'>HaGeZi Threat Intelligence</a></td><td>626,636</td><td>453,723</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/dga30.txt'>HaGeZi DGA 30 Days</a></td><td>2,280,801</td><td>2,260,477</td></tr>
 </tbody>
 </table>
 
