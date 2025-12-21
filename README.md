@@ -8,7 +8,7 @@
 
 ---
 
-*A blocklist aggregator that compiles multiple sources into a single, deduplicated hosts file.*
+*A blocklist aggregator that compiles multiple sources into two optimized hosts files: one for general protection (ads, trackers, malware) and one including NSFW content blocking.*
 *Perfect for applications like [TrackerControl](https://f-droid.org/packages/net.kollnig.missioncontrol.fdroid/) that only support one custom blocklist URL.*
 
 ---
@@ -17,17 +17,29 @@
 
 ## Usage
 
-**Raw Hosts File URL:**
+**General Protection (Ads, Trackers, Malware):**
 
 ```text
-https://raw.githubusercontent.com/scottdraper8/yaha/main/hosts
+https://github.com/scottdraper8/yaha/releases/download/latest/hosts
 ```
 
-Copy this URL into any application that supports hosts-based blocking to get unified protection from all configured blocklists.
+**Complete Protection (Including NSFW Content):**
+
+```text
+https://github.com/scottdraper8/yaha/releases/download/latest/hosts_nsfw
+```
+
+Copy either URL into any application that supports hosts-based blocking:
+
+- Use `hosts` for family-friendly general protection (4.3M domains)
+- Use `hosts_nsfw` for comprehensive blocking including adult content (9.3M domains)
+
+> [!TIP]
+> Compatible with TrackerControl, Pi-hole, AdGuard Home, personalDNSfilter, and any app supporting hosts file URLs.
 
 ## How It Works
 
-YAHA runs automatically every 6 hours via GitHub Actions, fetching blocklists concurrently, parsing multiple formats, deduplicating domains, and generating a unified hosts file with statistics.
+YAHA runs automatically every 6 hours via GitHub Actions, fetching blocklists concurrently, parsing multiple formats (hosts, raw domains, Adblock Plus), sorting and deduplicating via streaming algorithms, and generating unified hosts files with statistics.
 
 ```mermaid
 %%{init: {'theme': 'dark', 'themeVariables': {
@@ -41,23 +53,26 @@ YAHA runs automatically every 6 hours via GitHub Actions, fetching blocklists co
     'textColor': '#f8f8f2'
 }}}%%
 flowchart LR
-    Sources[("📋 Blocklist<br/>Sources")] --> Fetch
+    Sources[("📋 Blocklist<br/>Sources<br/>(24 General + 3 NSFW)")] --> Fetch
 
     subgraph Process["⚙️ YAHA Processing"]
         direction LR
         Fetch["🔄 Concurrent<br/>Fetch"] --> Parse["📝 Parse<br/>Formats"]
-        Parse --> Dedupe["🔍 Deduplicate<br/>Domains"]
+        Parse --> Dedupe["🔍 Deduplicate<br/>& Separate"]
         Dedupe --> Stats["📊 Calculate<br/>Statistics"]
     end
 
-    Stats --> Output[("📄 Unified<br/>Hosts File")]
-    Stats --> README["📖 Update<br/>README"]
+    Stats --> Output1[("📄 hosts<br/>(General Only)<br/>4.3M domains")]
+    Stats --> Output2[("🔞 hosts_nsfw<br/>(Complete)<br/>9.3M domains")]
+    Stats --> README["📖 Update README<br/>(Dual Tables)"]
 
-    Output --> Apps["📱 Applications<br/>(TrackerControl, etc)"]
+    Output1 --> Apps["📱 Applications<br/>(TrackerControl, etc)"]
+    Output2 --> Apps
 
     style Sources fill:#44475a,stroke:#bd93f9,stroke-width:2px
     style Process fill:#44475a,stroke:#ff79c6,stroke-width:2px
-    style Output fill:#44475a,stroke:#50fa7b,stroke-width:2px
+    style Output1 fill:#44475a,stroke:#50fa7b,stroke-width:2px
+    style Output2 fill:#44475a,stroke:#ff79c6,stroke-width:2px
     style README fill:#44475a,stroke:#8be9fd,stroke-width:2px
     style Apps fill:#44475a,stroke:#ffb86c,stroke-width:2px
 ```
@@ -75,8 +90,11 @@ flowchart LR
 
 <div align="center">
 
-![Total Domains](https://img.shields.io/badge/Total_Unique_Domains-3,292,593-8be9fd?style=for-the-badge&labelColor=6272a4)
-![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--21_18:22:37_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
+![General Domains](https://img.shields.io/badge/General_Domains-9,292,083-8be9fd?style=for-the-badge&labelColor=6272a4)
+![Total Domains](https://img.shields.io/badge/Total_Domains_(with_NSFW)-4,930,778-ff79c6?style=for-the-badge&labelColor=6272a4)
+![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--21_23:53:47_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
+
+### General Protection Lists
 
 <table align="center">
 <thead>
@@ -87,18 +105,54 @@ flowchart LR
 </tr>
 </thead>
 <tbody>
-<tr><td><a href='https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts'>Steven Black's Unified Hosts</a></td><td>88,502</td><td>38,832</td></tr>
-<tr><td><a href='https://big.oisd.nl'>OISD Big List</a></td><td>260,639</td><td>85,790</td></tr>
-<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt'>HaGeZi Multi-pro Extended</a></td><td>329,005</td><td>217,503</td></tr>
-<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt'>HaGeZi Threat Intelligence</a></td><td>626,636</td><td>453,723</td></tr>
-<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/dga30.txt'>HaGeZi DGA 30 Days</a></td><td>2,280,801</td><td>2,260,477</td></tr>
+<tr><td><a href='https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts'>Steven Black's Unified Hosts</a></td><td>88,502</td><td>0</td></tr>
+<tr><td><a href='https://big.oisd.nl'>OISD Big List</a></td><td>261,095</td><td>0</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt'>HaGeZi Multi-pro Extended</a></td><td>329,424</td><td>0</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt'>HaGeZi Threat Intelligence</a></td><td>627,242</td><td>0</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/dga30.txt'>HaGeZi DGA 30 Days</a></td><td>2,280,801</td><td>0</td></tr>
+<tr><td><a href='https://v.firebog.net/hosts/RPiList-Phishing.txt'>RPiList Phishing</a></td><td>983,583</td><td>0</td></tr>
+<tr><td><a href='https://v.firebog.net/hosts/RPiList-Malware.txt'>RPiList Malware</a></td><td>301,338</td><td>0</td></tr>
+<tr><td><a href='https://raw.githubusercontent.com/RooneyMcNibNug/pihole-stuff/master/SNAFU.txt'>SNAFU</a></td><td>71,907</td><td>0</td></tr>
+<tr><td><a href='https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt'>Anudeep's Blacklist</a></td><td>42,521</td><td>0</td></tr>
+<tr><td><a href='https://hostfiles.frogeye.fr/firstparty-trackers-hosts.txt'>First-Party Trackers</a></td><td>31,717</td><td>0</td></tr>
+<tr><td><a href='https://v.firebog.net/hosts/AdguardDNS.txt'>AdGuard DNS Filter</a></td><td>119,777</td><td>0</td></tr>
+<tr><td><a href='https://v.firebog.net/hosts/Easyprivacy.txt'>EasyPrivacy</a></td><td>42,210</td><td>0</td></tr>
+<tr><td><a href='https://lists.cyberhost.uk/malware.txt'>Cyber Threat Coalition Malware</a></td><td>20,229</td><td>0</td></tr>
+<tr><td><a href='https://v.firebog.net/hosts/Prigent-Crypto.txt'>Prigent Crypto</a></td><td>16,288</td><td>0</td></tr>
+<tr><td><a href='https://raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt'>Spam404</a></td><td>8,140</td><td>0</td></tr>
+<tr><td><a href='https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts.txt'>KADhosts</a></td><td>57,463</td><td>0</td></tr>
+<tr><td><a href='https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts'>hostsVN</a></td><td>19,175</td><td>0</td></tr>
+<tr><td><a href='https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareHosts.txt'>DandelionSprout Anti-Malware</a></td><td>15,187</td><td>0</td></tr>
+<tr><td><a href='https://raw.githubusercontent.com/matomo-org/referrer-spam-blacklist/master/spammers.txt'>Matomo Referrer Spam</a></td><td>2,322</td><td>0</td></tr>
+<tr><td><a href='https://v.firebog.net/hosts/Prigent-Ads.txt'>Prigent Ads</a></td><td>4,270</td><td>0</td></tr>
+<tr><td><a href='https://raw.githubusercontent.com/AssoEchap/stalkerware-indicators/master/generated/hosts'>Stalkerware Indicators</a></td><td>919</td><td>0</td></tr>
+<tr><td><a href='https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/data/hosts/spy.txt'>Windows Spy Blocker</a></td><td>347</td><td>0</td></tr>
+<tr><td><a href='https://v.firebog.net/hosts/static/w3kbl.txt'>W3KBL</a></td><td>355</td><td>0</td></tr>
+<tr><td><a href='https://malware-filter.gitlab.io/malware-filter/phishing-filter-hosts.txt'>Phishing Hosts</a></td><td>20,596</td><td>0</td></tr>
+</tbody>
+</table>
+
+### NSFW Blocking Lists
+
+<table align="center">
+<thead>
+<tr>
+<th>Source List</th>
+<th>Total Domains</th>
+<th>Unique Contribution</th>
+</tr>
+</thead>
+<tbody>
+<tr><td><a href='https://nsfw.oisd.nl'>OISD NSFW</a></td><td>408,648</td><td>0</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/nsfw.txt'>HaGeZi NSFW</a></td><td>85,511</td><td>0</td></tr>
+<tr><td><a href='https://v.firebog.net/hosts/Prigent-Adult.txt'>Prigent Adult</a></td><td>4,646,353</td><td>0</td></tr>
 </tbody>
 </table>
 
 </div>
 
 > [!NOTE]
-> Unique Contribution shows domains that appear only in that specific list. Sources with low unique counts (~50 or less) should be considered for removal as they provide minimal value.
+> Unique Contribution shows domains that appear only in that specific list. Two files are generated: `hosts` (general only) and `hosts_nsfw` (includes NSFW). Sources with low unique counts (~50 or less) should be considered for removal as they provide minimal value.
 
 <!-- STATS_END -->
 

@@ -43,3 +43,9 @@ Thumbs.db
 
 # Ruff cache
 .ruff_cache/
+
+# Discovery files
+discovery/
+
+# Generated blocklist files
+blocklists/

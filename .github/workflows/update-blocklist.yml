@@ -36,51 +36,96 @@ jobs:
 
       - name: Run blocklist compiler
         id: compile
-        continue-on-error: true
         run: |
           python compile_blocklist.py
           EXIT_CODE=$?
           echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
-          # Exit 0 (no changes) or 1 (updated) are both success
-          if [ $EXIT_CODE -eq 0 ] || [ $EXIT_CODE -eq 1 ]; then
-            exit 0
+
+          # Exit code 0 = no changes, 1 = updated, 2+ = error
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "✓ No domain changes detected"
+          elif [ $EXIT_CODE -eq 1 ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "✓ Domain content changed"
           else
+            echo "✗ Compilation failed with exit code $EXIT_CODE"
             exit $EXIT_CODE
           fi
 
-      - name: Check for changes
-        id: check_changes
+      - name: Update or create latest release
+        if: steps.compile.outputs.changed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if git diff --quiet hosts; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "No changes detected in hosts file"
-          else
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "Changes detected in hosts file"
-          fi
+          # Count domains
+          GENERAL_COUNT=$(grep -v '^#' blocklists/hosts | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+          NSFW_COUNT=$(grep -v '^#' blocklists/hosts_nsfw | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+          TIMESTAMP=$(date -u +'%Y-%m-%d %H:%M:%S UTC')
 
-      - name: Commit and push changes
-        if: steps.check_changes.outputs.changed == 'true'
+          # Create release notes
+          cat > release_notes.md << EOF
+          # YAHA Blocklist - Latest
+
+          **Automatically updated every 6 hours**
+
+          ## 📊 Statistics
+
+          - **General Protection:** ${GENERAL_COUNT} domains
+          - **Complete (with NSFW):** ${NSFW_COUNT} domains
+          - **Last Updated:** ${TIMESTAMP}
+
+          ## 📥 Usage
+
+          ### General Protection (Ads, Trackers, Malware)
+          \`\`\`
+          https://github.com/scottdraper8/yaha/releases/download/latest/hosts
+          \`\`\`
+
+          ### Complete Protection (Including NSFW)
+          \`\`\`
+          https://github.com/scottdraper8/yaha/releases/download/latest/hosts_nsfw
+          \`\`\`
+
+          Copy either URL into any application that supports hosts-based blocking (TrackerControl, Pi-hole, AdGuard, etc).
+
+          ## 📋 Source Lists
+
+          - 24 General protection lists
+          - 3 NSFW blocking lists
+
+          See [README](https://github.com/scottdraper8/yaha#readme) for detailed statistics and source list breakdown.
+          EOF
+
+          # Delete existing 'latest' release and tag if it exists
+          gh release delete latest --yes 2>/dev/null || true
+          git push --delete origin latest 2>/dev/null || true
+
+          # Create new 'latest' release with updated files
+          gh release create latest \
+            --title "YAHA Blocklist - Latest" \
+            --notes-file release_notes.md \
+            blocklists/hosts \
+            blocklists/hosts_nsfw
+
+          echo "✓ Release 'latest' updated with ${GENERAL_COUNT} general / ${NSFW_COUNT} complete domains"
+
+      - name: Commit README to main
+        if: steps.compile.outputs.changed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Count domains in hosts file (excluding comments and empty lines)
-          DOMAIN_COUNT=$(grep -v '^#' hosts | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+          # Count domains for commit message
+          GENERAL_COUNT=$(grep -v '^#' blocklists/hosts | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+          NSFW_COUNT=$(grep -v '^#' blocklists/hosts_nsfw | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
 
-          git add hosts README.md
-          git commit -m "Update blocklist: ${DOMAIN_COUNT} domains [automated]"
+          # Commit README and domain count tracker
+          git add README.md
+          git commit -m "Update blocklist stats: ${GENERAL_COUNT} general / ${NSFW_COUNT} with NSFW [automated]"
           git push
 
       - name: No changes detected
-        if: steps.check_changes.outputs.changed == 'false'
+        if: steps.compile.outputs.changed == 'false'
         run: |
-          echo "Blocklist is up to date. README updated with last run time."
-          # Commit README changes even if hosts file unchanged
-          if ! git diff --quiet README.md; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add README.md
-            git commit -m "Update README: last run timestamp [automated]"
-            git push
-          fi
+          echo "✓ Blocklists are up to date - no release update needed"
