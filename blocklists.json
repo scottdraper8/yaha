@@ -1,22 +1,137 @@
 [
   {
     "name": "Steven Black's Unified Hosts",
-    "url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
+    "url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
+    "nsfw": false
   },
   {
     "name": "OISD Big List",
-    "url": "https://big.oisd.nl"
+    "url": "https://big.oisd.nl",
+    "nsfw": false
   },
   {
     "name": "HaGeZi Multi-pro Extended",
-    "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt"
+    "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt",
+    "nsfw": false
   },
   {
     "name": "HaGeZi Threat Intelligence",
-    "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt"
+    "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt",
+    "nsfw": false
   },
   {
     "name": "HaGeZi DGA 30 Days",
-    "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/dga30.txt"
+    "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/dga30.txt",
+    "nsfw": false
+  },
+  {
+    "name": "OISD NSFW",
+    "url": "https://nsfw.oisd.nl",
+    "nsfw": true
+  },
+  {
+    "name": "HaGeZi NSFW",
+    "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/nsfw.txt",
+    "nsfw": true
+  },
+  {
+    "name": "Prigent Adult",
+    "url": "https://v.firebog.net/hosts/Prigent-Adult.txt",
+    "nsfw": true
+  },
+  {
+    "name": "RPiList Phishing",
+    "url": "https://v.firebog.net/hosts/RPiList-Phishing.txt",
+    "nsfw": false
+  },
+  {
+    "name": "RPiList Malware",
+    "url": "https://v.firebog.net/hosts/RPiList-Malware.txt",
+    "nsfw": false
+  },
+  {
+    "name": "SNAFU",
+    "url": "https://raw.githubusercontent.com/RooneyMcNibNug/pihole-stuff/master/SNAFU.txt",
+    "nsfw": false
+  },
+  {
+    "name": "Anudeep's Blacklist",
+    "url": "https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt",
+    "nsfw": false
+  },
+  {
+    "name": "First-Party Trackers",
+    "url": "https://hostfiles.frogeye.fr/firstparty-trackers-hosts.txt",
+    "nsfw": false
+  },
+  {
+    "name": "AdGuard DNS Filter",
+    "url": "https://v.firebog.net/hosts/AdguardDNS.txt",
+    "nsfw": false
+  },
+  {
+    "name": "EasyPrivacy",
+    "url": "https://v.firebog.net/hosts/Easyprivacy.txt",
+    "nsfw": false
+  },
+  {
+    "name": "Cyber Threat Coalition Malware",
+    "url": "https://lists.cyberhost.uk/malware.txt",
+    "nsfw": false
+  },
+  {
+    "name": "Prigent Crypto",
+    "url": "https://v.firebog.net/hosts/Prigent-Crypto.txt",
+    "nsfw": false
+  },
+  {
+    "name": "Spam404",
+    "url": "https://raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt",
+    "nsfw": false
+  },
+  {
+    "name": "KADhosts",
+    "url": "https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts.txt",
+    "nsfw": false
+  },
+  {
+    "name": "hostsVN",
+    "url": "https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts",
+    "nsfw": false
+  },
+  {
+    "name": "DandelionSprout Anti-Malware",
+    "url": "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareHosts.txt",
+    "nsfw": false
+  },
+  {
+    "name": "Matomo Referrer Spam",
+    "url": "https://raw.githubusercontent.com/matomo-org/referrer-spam-blacklist/master/spammers.txt",
+    "nsfw": false
+  },
+  {
+    "name": "Prigent Ads",
+    "url": "https://v.firebog.net/hosts/Prigent-Ads.txt",
+    "nsfw": false
+  },
+  {
+    "name": "Stalkerware Indicators",
+    "url": "https://raw.githubusercontent.com/AssoEchap/stalkerware-indicators/master/generated/hosts",
+    "nsfw": false
+  },
+  {
+    "name": "Windows Spy Blocker",
+    "url": "https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/data/hosts/spy.txt",
+    "nsfw": false
+  },
+  {
+    "name": "W3KBL",
+    "url": "https://v.firebog.net/hosts/static/w3kbl.txt",
+    "nsfw": false
+  },
+  {
+    "name": "Phishing Hosts",
+    "url": "https://malware-filter.gitlab.io/malware-filter/phishing-filter-hosts.txt",
+    "nsfw": false
   }
 ]
