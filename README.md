@@ -222,8 +222,21 @@ In `compile_blocklist.py`, you can adjust these constants:
 
 ## Acknowledgments
 
-Thanks to the maintainers of the source blocklists:
+Thanks to the maintainers of all source blocklists:
 
-- [Steven Black](https://github.com/StevenBlack/hosts)
-- [OISD](https://oisd.nl/)
-- [HaGeZi](https://github.com/hagezi/dns-blocklists)
+- [Steven Black](https://github.com/StevenBlack/hosts) - Unified hosts file
+- [OISD](https://oisd.nl/) - Big List & NSFW blocklists
+- [HaGeZi](https://github.com/hagezi/dns-blocklists) - Multi-pro, Threat Intelligence, DGA, and NSFW lists
+- [Firebog](https://firebog.net/) - RPiList Phishing/Malware, Prigent collections, AdGuard DNS, EasyPrivacy, W3KBL
+- [RooneyMcNibNug](https://github.com/RooneyMcNibNug/pihole-stuff) - SNAFU
+- [Anudeep ND](https://github.com/anudeepND/blacklist) - Adservers blacklist
+- [Frogeye](https://hostfiles.frogeye.fr/) - First-party trackers
+- [Cyber Threat Coalition](https://cyberthreatcoalition.org/) - Malware blocklist
+- [Spam404](https://github.com/Spam404/lists) - Main blacklist
+- [Polish Filters Team](https://github.com/PolishFiltersTeam/KADhosts) - KADhosts
+- [bigdargon](https://github.com/bigdargon/hostsVN) - hostsVN
+- [DandelionSprout](https://github.com/DandelionSprout/adfilt) - Anti-Malware List
+- [Matomo](https://github.com/matomo-org/referrer-spam-blacklist) - Referrer spam blacklist
+- [AssoEchap](https://github.com/AssoEchap/stalkerware-indicators) - Stalkerware indicators
+- [crazy-max](https://github.com/crazy-max/WindowsSpyBlocker) - Windows Spy Blocker
+- [Malware Filter](https://gitlab.com/malware-filter/phishing-filter) - Phishing filter
