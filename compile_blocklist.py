@@ -15,36 +15,45 @@ from pathlib import Path
 
 from curl_cffi import requests
 
-# Configuration constants
 MAX_WORKERS = 5
 REQUEST_TIMEOUT = 30
 
 
 @dataclass(frozen=True)
-class TempFiles:
-    """Manages temporary file paths for domain processing pipeline."""
+class PipelineFiles:
+    """Temporary file paths for annotated domain processing pipeline."""
 
-    unsorted: Path
+    annotated: Path
     sorted: Path
-    deduped: Path
+    domains_all: Path
+    domains_general: Path
 
     @classmethod
-    def for_variant(cls, variant: str) -> "TempFiles":
-        """Creates temp file paths for a processing variant (general or nsfw)."""
+    def create(cls) -> "PipelineFiles":
+        """Create temp file paths for the processing pipeline."""
         return cls(
-            unsorted=Path(f"temp_{variant}_unsorted.txt"),
-            sorted=Path(f"temp_{variant}_sorted.txt"),
-            deduped=Path(f"temp_{variant}_deduped.txt"),
+            annotated=Path("temp_annotated.txt"),
+            sorted=Path("temp_sorted.txt"),
+            domains_all=Path("temp_domains_all.txt"),
+            domains_general=Path("temp_domains_general.txt"),
         )
 
     def cleanup(self) -> None:
-        """Removes all temporary files."""
-        self.unsorted.unlink(missing_ok=True)
+        """Remove all temporary files."""
+        self.annotated.unlink(missing_ok=True)
         self.sorted.unlink(missing_ok=True)
-        self.deduped.unlink(missing_ok=True)
+        self.domains_all.unlink(missing_ok=True)
+        self.domains_general.unlink(missing_ok=True)
 
 
-# Regex patterns to extract domains from various blocklist formats
+@dataclass
+class ContributionStats:
+    """Per-list contribution statistics for both aggregates."""
+
+    contrib_all: dict[str, int]
+    contrib_general: dict[str, int]
+
+
 # Domain validation per RFC 1035: max 253 chars total, 63 per label
 _DOMAIN_REGEX = r"[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*"
 
@@ -57,7 +66,10 @@ ADBLOCK_PATTERN = re.compile(rf"^\|\|({_DOMAIN_REGEX})\^")
 
 def fetch_blocklist_stream(name: str, url: str, timeout: int = REQUEST_TIMEOUT):
     """
-    Fetches blocklist content from URL.
+    Fetch blocklist content from URL and return line iterator.
+
+    curl_cffi doesn't support true streaming (iter_content raises NotImplementedError).
+    Fetch full response but yield lines one at a time to minimize memory overhead.
 
     Args:
         name: Name of the blocklist
@@ -80,9 +92,11 @@ def fetch_blocklist_stream(name: str, url: str, timeout: int = REQUEST_TIMEOUT):
         )
         response.raise_for_status()
 
+        response_text = response.text
+
         def line_generator():
-            for line in response.text.splitlines():
-                yield line
+            for line in response_text.split("\n"):
+                yield line.rstrip("\r")
 
         return name, url, line_generator()
     except Exception as e:
@@ -91,9 +105,9 @@ def fetch_blocklist_stream(name: str, url: str, timeout: int = REQUEST_TIMEOUT):
 
 def is_valid_domain(domain: str) -> bool:
     """
-    Validates domain structure per RFC 1035.
+    Validate domain structure per RFC 1035.
 
-    Checks for proper TLD, label length, hyphen placement, and format.
+    Check for proper TLD, label length, hyphen placement, and format.
     """
     if not domain or len(domain) > 253:
         return False
@@ -114,41 +128,11 @@ def is_valid_domain(domain: str) -> bool:
     return True
 
 
-def compute_domain_hash(file_path: Path) -> str:
-    """
-    Computes SHA256 hash of domain lines only (excluding comments/headers).
-
-    Uses system tools for better performance with large files.
-
-    Args:
-        file_path: Path to hosts file
-
-    Returns:
-        SHA256 hash as hex string, or empty string if file doesn't exist
-    """
-    if not file_path.exists():
-        return ""
-
-    try:
-        # Piped commands: filter comments → filter empty lines → compute hash
-        result = subprocess.run(
-            "grep -v '^#' | grep -v '^[[:space:]]*$' | sha256sum",
-            input=file_path.read_text(),
-            capture_output=True,
-            text=True,
-            shell=True,
-            check=True,
-        )
-        return result.stdout.split()[0]
-    except (subprocess.CalledProcessError, IndexError):
-        return ""
-
-
 def parse_domains_stream(lines):
     """
-    Extracts domains from line iterator, yielding one at a time.
+    Extract domains from line iterator, yielding one at a time.
 
-    Supports hosts files, raw domain lists, and Adblock Plus filters.
+    Support hosts files, raw domain lists, and Adblock Plus filters.
 
     Args:
         lines: Iterator of lines from blocklist
@@ -187,7 +171,7 @@ def parse_domains_stream(lines):
 
 def load_blocklists() -> list[dict[str, str]]:
     """
-    Loads blocklist configuration from JSON file.
+    Load blocklist configuration from JSON file.
 
     Returns:
         List of blocklist configurations
@@ -224,7 +208,7 @@ def filter_blocklists_by_nsfw(
     blocklists: list[dict[str, str]], include_nsfw: bool
 ) -> list[dict[str, str]]:
     """
-    Filters blocklist configuration by NSFW flag.
+    Filter blocklist configuration by NSFW flag.
 
     Args:
         blocklists: List of blocklist configurations
@@ -236,26 +220,28 @@ def filter_blocklists_by_nsfw(
     return [bl for bl in blocklists if bl.get("nsfw", False) == include_nsfw]
 
 
-def collect_blocklists_to_disk(
+def collect_blocklists_annotated(
     blocklists: list[dict[str, str]],
-) -> tuple[Path, Path, dict[str, int]]:
+    output_file: Path,
+) -> tuple[dict[str, int], dict[int, str]]:
     """
-    Fetches and streams all blocklists to temporary files on disk.
+    Fetch all blocklists and emit annotated stream to disk.
+
+    Format per line: domain<TAB>list_id<TAB>is_general
+    where is_general is 1 for non-NSFW lists and 0 otherwise.
 
     Args:
         blocklists: List of blocklist configurations
+        output_file: Path to write annotated stream
 
     Returns:
-        Tuple of (general temp file path, nsfw temp file path, domain count per list)
+        Tuple of (domain count per list, list_id to name mapping)
     """
-    temp_files_general = TempFiles.for_variant("general")
-    temp_files_nsfw = TempFiles.for_variant("nsfw")
-    list_stats = {}
+    list_stats: dict[str, int] = {}
+    name_to_id = {bl["name"]: idx for idx, bl in enumerate(blocklists)}
+    id_to_name = {idx: bl["name"] for idx, bl in enumerate(blocklists)}
 
-    with (
-        temp_files_general.unsorted.open("w") as f_gen,
-        temp_files_nsfw.unsorted.open("w") as f_nsfw,
-    ):
+    with output_file.open("w") as f_out:
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             future_to_blocklist = {
                 executor.submit(fetch_blocklist_stream, bl["name"], bl["url"]): bl
@@ -266,104 +252,144 @@ def collect_blocklists_to_disk(
                 blocklist = future_to_blocklist[future]
                 name = blocklist["name"]
                 is_nsfw = blocklist.get("nsfw", False)
+                is_general_flag = 0 if is_nsfw else 1
+                list_id = name_to_id[name]
+                nsfw_tag = "  [NSFW]" if is_nsfw else ""
+
+                print(f"Fetching {name}{nsfw_tag}...")
 
                 try:
-                    name, url, lines = future.result()
-                    print(f"Fetching {name}{'  [NSFW]' if is_nsfw else ''}...")
+                    _, _, lines = future.result()
 
                     count = 0
                     for domain in parse_domains_stream(lines):
-                        f_gen.write(f"{domain}\n")
-                        if is_nsfw:
-                            f_nsfw.write(f"{domain}\n")
+                        f_out.write(f"{domain}\t{list_id}\t{is_general_flag}\n")
                         count += 1
 
                     list_stats[name] = count
                     print(f"  → Found {count:,} domains")
                 except Exception as e:
-                    print(f"Fetching {name}...")
                     print(f"  → Error: {e}", file=sys.stderr)
                     list_stats[name] = 0
 
-    return temp_files_general.unsorted, temp_files_nsfw.unsorted, list_stats
+    return list_stats, id_to_name
 
 
-def sort_domain_file(input_file: Path, output_file: Path):
+def process_annotated_pipeline(
+    pipeline: PipelineFiles,
+    id_to_name: dict[int, str],
+) -> tuple[int, int, ContributionStats]:
     """
-    Sorts domain file alphabetically using system sort.
+    Process annotated stream through sort → streaming group-by pipeline.
+
+    Single external sort by domain, then streaming group-by that:
+    - Writes deduplicated domains to ALL output (sorted)
+    - Writes deduplicated domains to GENERAL output (sorted, derived in same pass)
+    - Computes per-list contribution counters for both aggregates
+
+    Contribution metric: domains appearing in exactly one list within each aggregate.
+    This matches "how many domains would disappear if list were removed."
 
     Args:
-        input_file: Path to unsorted domain file
-        output_file: Path to write sorted domain file
-    """
-    subprocess.run(["sort", str(input_file), "-o", str(output_file)], check=True)
-
-
-def deduplicate_sorted_file(sorted_input: Path, deduplicated_output: Path) -> int:
-    """
-    Deduplicates sorted domains using consecutive comparison.
-
-    Implements sequential duplicate removal: compares each domain with its
-    predecessor in a single pass. Since input is sorted, all duplicates are
-    adjacent and can be detected by pairwise comparison.
-
-    Memory-efficient: maintains only two strings in memory (previous and current).
-    This is the algorithm used by Unix `uniq` command.
-
-    Args:
-        sorted_input: Path to sorted domain file
-        deduplicated_output: Path to write deduplicated domains
+        pipeline: PipelineFiles containing input/output paths
+        id_to_name: Mapping of list IDs to names
 
     Returns:
-        Count of unique domains
+        Tuple of (all_count, general_count, ContributionStats)
     """
-    unique_count = 0
-    previous_domain = None
+    # Sort by domain (primary), then list_id (secondary) for consistent grouping
+    print("  Sorting annotated stream...")
+    subprocess.run(
+        [
+            "sort",
+            "-t",
+            "\t",
+            "-k1,1",
+            "-k2,2n",
+            str(pipeline.annotated),
+            "-o",
+            str(pipeline.sorted),
+        ],
+        check=True,
+    )
 
-    with sorted_input.open("r") as f_in, deduplicated_output.open("w") as f_out:
+    print("  Streaming group-by with contribution calculation...")
+    all_count = 0
+    general_count = 0
+    contrib_all: dict[str, int] = {name: 0 for name in id_to_name.values()}
+    contrib_general: dict[str, int] = {name: 0 for name in id_to_name.values()}
+
+    with (
+        pipeline.sorted.open("r") as f_in,
+        pipeline.domains_all.open("w") as f_all,
+        pipeline.domains_general.open("w") as f_gen,
+    ):
+        current_domain: str | None = None
+        lists_all: set[int] = set()
+        lists_general: set[int] = set()
+
+        def flush_domain():
+            """Process accumulated data for current domain and write outputs."""
+            nonlocal all_count, general_count
+            if current_domain is None:
+                return
+
+            # Write to ALL output (always)
+            f_all.write(f"{current_domain}\n")
+            all_count += 1
+
+            # Write to GENERAL output only if at least one general list contains it
+            if lists_general:
+                f_gen.write(f"{current_domain}\n")
+                general_count += 1
+
+            # Update contribution counters: domains with frequency=1 in each aggregate
+            if len(lists_all) == 1:
+                only_list_id = next(iter(lists_all))
+                contrib_all[id_to_name[only_list_id]] += 1
+
+            if len(lists_general) == 1:
+                only_list_id = next(iter(lists_general))
+                contrib_general[id_to_name[only_list_id]] += 1
+
         for line in f_in:
-            current_domain = line.strip()
-
-            if not current_domain:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) != 3:
                 continue
 
-            if current_domain != previous_domain:
-                if previous_domain is not None:
-                    f_out.write(f"{previous_domain}\n")
-                    unique_count += 1
-                previous_domain = current_domain
+            domain, list_id_str, is_general_str = parts
+            list_id = int(list_id_str)
+            is_general = is_general_str == "1"
 
-        if previous_domain is not None:
-            f_out.write(f"{previous_domain}\n")
-            unique_count += 1
+            if domain != current_domain:
+                flush_domain()
+                current_domain = domain
+                lists_all.clear()
+                lists_general.clear()
 
-    return unique_count
+            lists_all.add(list_id)
+            if is_general:
+                lists_general.add(list_id)
+
+        # Flush final domain
+        flush_domain()
+
+    stats = ContributionStats(contrib_all=contrib_all, contrib_general=contrib_general)
+    return all_count, general_count, stats
 
 
-def process_domain_pipeline(temp_files: TempFiles) -> int:
+def format_domain_count(count: int) -> str:
     """
-    Processes domain file through sort → deduplicate pipeline.
+    Format domain count as human-readable string (e.g., "4.4M" for 4,400,000).
 
     Args:
-        temp_files: TempFiles instance containing pipeline file paths
+        count: Domain count
 
     Returns:
-        Count of unique domains
+        Formatted string
     """
-    sort_domain_file(temp_files.unsorted, temp_files.sorted)
-    unique_count = deduplicate_sorted_file(temp_files.sorted, temp_files.deduped)
-    return unique_count
-
-
-def calculate_overlap(
-    blocklists: list[dict[str, str]], domains_by_list: dict[str, set[str]]
-) -> dict[str, int]:
-    """
-    Disabled to avoid memory issues with large domain sets.
-
-    Returns zero for all lists.
-    """
-    return {bl["name"]: 0 for bl in blocklists}
+    millions = count / 1_000_000
+    return f"{millions:.1f}M"
 
 
 def build_header(
@@ -375,7 +401,7 @@ def build_header(
     timestamp: str,
 ) -> list[str]:
     """
-    Builds header lines for hosts file.
+    Build header lines for hosts file.
 
     Args:
         title: Title for the hosts file (e.g., "GENERAL - No NSFW")
@@ -398,11 +424,12 @@ def build_header(
         "# Source Lists:",
     ]
 
-    for blocklist in blocklists:
-        is_nsfw = blocklist.get("nsfw", False)
-        if not include_nsfw and is_nsfw:
-            continue
+    filtered_lists = (
+        blocklists if include_nsfw else filter_blocklists_by_nsfw(blocklists, False)
+    )
 
+    for blocklist in filtered_lists:
+        is_nsfw = blocklist.get("nsfw", False)
         count = list_stats.get(blocklist["name"], 0)
         nsfw_flag = " [NSFW]" if is_nsfw else ""
         header.append(f"#   - {blocklist['name']}{nsfw_flag}: {count:,} domains")
@@ -416,7 +443,7 @@ def generate_hosts_file_streaming(
     deduplicated_domains: Path, output_file: Path, header_lines: list[str]
 ):
     """
-    Generates hosts file by streaming from deduplicated domain file.
+    Generate hosts file by streaming from deduplicated domain file.
 
     Args:
         deduplicated_domains: Path to file with deduplicated domains
@@ -437,25 +464,28 @@ def update_readme(
     list_stats: dict[str, int],
     total_general: int,
     total_all: int,
-    unique_contributions: dict[str, int],
+    contribution_stats: ContributionStats,
     last_update: str,
 ) -> None:
     """
-    Updates README with dual statistics tables (general and NSFW).
+    Update README with dual statistics tables (general and NSFW).
+
+    General lists show contribution to GENERAL aggregate (hosts file).
+    NSFW lists show contribution to ALL aggregate (hosts_nsfw file).
 
     Args:
         blocklists: List of blocklist configurations
         list_stats: Domain count per list
         total_general: Total unique domains (non-NSFW)
         total_all: Total unique domains (including NSFW)
-        unique_contributions: Unique domains per list
+        contribution_stats: Per-list contribution to each aggregate
         last_update: Timestamp of last update
     """
 
-    def build_table(lists: list[dict[str, str]]) -> str:
-        """Builds HTML table for blocklist statistics."""
+    def build_table(lists: list[dict[str, str]], contributions: dict[str, int]) -> str:
+        """Build HTML table for blocklist statistics."""
         sorted_lists = sorted(
-            lists, key=lambda bl: unique_contributions.get(bl["name"], 0), reverse=True
+            lists, key=lambda bl: contributions.get(bl["name"], 0), reverse=True
         )
 
         rows = []
@@ -463,7 +493,7 @@ def update_readme(
             name = bl["name"]
             url = bl["url"]
             total = list_stats.get(name, 0)
-            unique = unique_contributions.get(name, 0)
+            unique = contributions.get(name, 0)
             rows.append(
                 f"<tr><td><a href='{url}'>{name}</a></td>"
                 f"<td>{total:,}</td><td>{unique:,}</td></tr>"
@@ -489,6 +519,32 @@ def update_readme(
         return
 
     content = readme_path.read_text()
+
+    general_formatted = format_domain_count(total_general)
+    nsfw_formatted = format_domain_count(total_all)
+
+    replacements = [
+        (
+            r"(Use `hosts` for general protection without NSFW blocking \(~)[^)]+(\))",
+            rf"\g<1>{general_formatted} domains\g<2>",
+        ),
+        (
+            r"(Use `hosts_nsfw` for complete protection including NSFW blocking \(~)[^)]+(\))",
+            rf"\g<1>{nsfw_formatted} domains\g<2>",
+        ),
+        (
+            r'(Output1\[\("📄 hosts<br/>\(General Only\)<br/>~)[^"]+( domains"\)\])',
+            rf"\g<1>{general_formatted}\g<2>",
+        ),
+        (
+            r'(Output2\[\("🔞 hosts_nsfw<br/>\(Complete\)<br/>~)[^"]+( domains"\)\])',
+            rf"\g<1>{nsfw_formatted}\g<2>",
+        ),
+    ]
+
+    for pattern, replacement in replacements:
+        content = re.sub(pattern, replacement, content)
+
     stats_start = content.find("<!-- STATS_START -->")
     stats_end = content.find("<!-- STATS_END -->")
 
@@ -499,8 +555,10 @@ def update_readme(
     general_lists = filter_blocklists_by_nsfw(blocklists, False)
     nsfw_lists = filter_blocklists_by_nsfw(blocklists, True)
 
-    general_table = build_table(general_lists)
-    nsfw_table = build_table(nsfw_lists)
+    # General lists: contribution to GENERAL aggregate (relevant for hosts file)
+    general_table = build_table(general_lists, contribution_stats.contrib_general)
+    # NSFW lists: contribution to ALL aggregate (relevant for hosts_nsfw file)
+    nsfw_table = build_table(nsfw_lists, contribution_stats.contrib_all)
 
     try:
         date_part, time_part, utc = last_update.split()
@@ -529,7 +587,7 @@ def update_readme(
 </div>
 
 > [!NOTE]
-> Unique Contribution shows domains that appear only in that specific list. Two files are generated: `hosts` (general only) and `hosts_nsfw` (includes NSFW). Sources with low unique counts (~50 or less) should be considered for removal as they provide minimal value.
+> **Unique Contribution** shows how many domains would disappear if that source were removed. These are domains that appear in only one list. Two files are generated: `hosts` (general only) and `hosts_nsfw` (includes NSFW). Sources with low unique counts (~50 or less) provide minimal value and should be considered for removal.
 
 <!-- STATS_END -->"""
 
@@ -544,10 +602,13 @@ def update_readme(
 
 def main() -> int:
     """
-    Main execution function using disk-based streaming.
+    Execute main compilation process using annotated streaming pipeline.
+
+    Pipeline: annotate → one sort → streaming group-by
+    Complexity: O(N log N) sort + O(N) streaming pass, O(k) memory for list counters.
 
     Returns:
-        Exit code: 0 if unchanged, 1 if updated, 2 if error
+        Exit code: 0 on success, 1 on error
     """
     print("YAHA - Yet Another Host Aggregator")
     print("=" * 50)
@@ -563,24 +624,20 @@ def main() -> int:
         hosts_path = blocklists_dir / "hosts"
         hosts_nsfw_path = blocklists_dir / "hosts_nsfw"
 
-        old_general_hash = compute_domain_hash(hosts_path)
-        old_nsfw_hash = compute_domain_hash(hosts_nsfw_path)
+        pipeline = PipelineFiles.create()
 
-        print("\nStep 1: Fetching and streaming blocklists to disk...")
-        _, _, list_stats = collect_blocklists_to_disk(blocklists)
+        print("\nStep 1: Fetching blocklists and emitting annotated stream...")
+        list_stats, id_to_name = collect_blocklists_annotated(
+            blocklists, pipeline.annotated
+        )
 
-        print("\nStep 2: Sorting and deduplicating domains...")
-        temp_general = TempFiles.for_variant("general")
-        temp_nsfw = TempFiles.for_variant("nsfw")
-
-        print("  Processing general (non-NSFW) domains...")
-        general_count = process_domain_pipeline(temp_general)
-
-        print("  Processing all domains (including NSFW)...")
-        nsfw_count = process_domain_pipeline(temp_nsfw)
+        print("\nStep 2: Processing through sort → group-by pipeline...")
+        all_count, general_count, contribution_stats = process_annotated_pipeline(
+            pipeline, id_to_name
+        )
 
         print(f"\n  Total unique domains (general): {general_count:,}")
-        print(f"  Total unique domains (all with NSFW): {nsfw_count:,}")
+        print(f"  Total unique domains (all with NSFW): {all_count:,}")
 
         print("\nStep 3: Generating hosts files...")
         timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -589,47 +646,38 @@ def main() -> int:
             "GENERAL - No NSFW", general_count, blocklists, list_stats, False, timestamp
         )
         nsfw_header = build_header(
-            "INCLUDING NSFW", nsfw_count, blocklists, list_stats, True, timestamp
+            "INCLUDING NSFW", all_count, blocklists, list_stats, True, timestamp
         )
 
-        generate_hosts_file_streaming(temp_general.deduped, hosts_path, general_header)
-        generate_hosts_file_streaming(temp_nsfw.deduped, hosts_nsfw_path, nsfw_header)
+        generate_hosts_file_streaming(
+            pipeline.domains_general, hosts_path, general_header
+        )
+        generate_hosts_file_streaming(
+            pipeline.domains_all, hosts_nsfw_path, nsfw_header
+        )
 
         print(f"  Wrote {general_count:,} domains to blocklists/hosts")
-        print(f"  Wrote {nsfw_count:,} domains to blocklists/hosts_nsfw")
+        print(f"  Wrote {all_count:,} domains to blocklists/hosts_nsfw")
 
         print("\nStep 4: Updating README...")
         update_readme(
             blocklists,
             list_stats,
             general_count,
-            nsfw_count,
-            {},
+            all_count,
+            contribution_stats,
             timestamp,
         )
 
         print("\nStep 5: Cleaning up temporary files...")
-        temp_general.cleanup()
-        temp_nsfw.cleanup()
+        pipeline.cleanup()
 
-        print("\nStep 6: Comparing with previous version...")
-        new_general_hash = compute_domain_hash(hosts_path)
-        new_nsfw_hash = compute_domain_hash(hosts_nsfw_path)
-
-        if old_general_hash != new_general_hash or old_nsfw_hash != new_nsfw_hash:
-            general_changed = old_general_hash != new_general_hash
-            nsfw_changed = old_nsfw_hash != new_nsfw_hash
-            print("\n✓ Domain content changed - blocklists updated")
-            print(f"  General: {'changed' if general_changed else 'unchanged'}")
-            print(f"  NSFW: {'changed' if nsfw_changed else 'unchanged'}")
-            return 1
-
-        print("\n✓ No domain changes detected - files up to date")
+        print("\n✓ Compilation complete")
         return 0
 
     except (FileNotFoundError, json.JSONDecodeError, ValueError) as e:
         print(f"\nError: {e}", file=sys.stderr)
-        return 2
+        return 1
 
 
 if __name__ == "__main__":

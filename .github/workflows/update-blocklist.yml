@@ -35,28 +35,9 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run blocklist compiler
-        id: compile
-        run: |
-          set +e  # Don't exit on error
-          python compile_blocklist.py
-          EXIT_CODE=$?
-          set -e  # Re-enable exit on error
-
-          # Exit code 0 = no changes, 1 = updated, 2+ = error
-          if [ $EXIT_CODE -eq 0 ]; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "✓ No domain changes detected"
-          elif [ $EXIT_CODE -eq 1 ]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "✓ Domain content changed"
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "✗ Compilation failed with exit code $EXIT_CODE"
-            exit $EXIT_CODE
-          fi
+        run: python compile_blocklist.py
 
       - name: Update or create latest release
-        if: steps.compile.outputs.changed == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -113,7 +94,6 @@ jobs:
           echo "✓ Release 'latest' updated with ${GENERAL_COUNT} general / ${NSFW_COUNT} complete domains"
 
       - name: Commit README to main
-        if: steps.compile.outputs.changed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -124,10 +104,5 @@ jobs:
 
           # Commit README and domain count tracker
           git add README.md
-          git commit -m "Update blocklist stats: ${GENERAL_COUNT} general / ${NSFW_COUNT} with NSFW [automated]"
-          git push
-
-      - name: No changes detected
-        if: steps.compile.outputs.changed == 'false'
-        run: |
-          echo "✓ Blocklists are up to date - no release update needed"
+          git commit -m "Update blocklist stats: ${GENERAL_COUNT} general / ${NSFW_COUNT} with NSFW [automated]" || echo "No README changes to commit"
+          git push || echo "Nothing to push"
