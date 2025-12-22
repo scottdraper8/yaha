@@ -29,13 +29,11 @@ https://github.com/scottdraper8/yaha/releases/download/latest/hosts
 https://github.com/scottdraper8/yaha/releases/download/latest/hosts_nsfw
 ```
 
-Copy either URL into any application that supports hosts-based blocking:
-
-- Use `hosts` for family-friendly general protection (4.3M domains)
-- Use `hosts_nsfw` for comprehensive blocking including adult content (9.3M domains)
-
 > [!TIP]
-> Compatible with TrackerControl, Pi-hole, AdGuard Home, personalDNSfilter, and any app supporting hosts file URLs.
+> Copy either URL into any application that supports hosts-based blocking:
+>
+> - Use `hosts` for general protection (~4.3M domains)
+> - Use `hosts_nsfw` for all the same domains in `hosts` ***plus*** adult content (**~9.3M domains**)
 
 ## How It Works
 
