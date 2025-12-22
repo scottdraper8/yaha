@@ -92,7 +92,7 @@ flowchart LR
 
 ![General Domains](https://img.shields.io/badge/General_Domains-9,292,083-8be9fd?style=for-the-badge&labelColor=6272a4)
 ![Total Domains](https://img.shields.io/badge/Total_Domains_(with_NSFW)-4,930,778-ff79c6?style=for-the-badge&labelColor=6272a4)
-![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--21_23:53:47_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
+![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--22_00:09:49_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
 
 ### General Protection Lists
 
