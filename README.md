@@ -152,7 +152,7 @@ flowchart LR
 </div>
 
 > [!NOTE]
-> Unique Contribution shows domains that appear only in that specific list. Two files are generated: `hosts` (general only) and `hosts_nsfw` (includes NSFW). Sources with low unique counts (~50 or less) should be considered for removal as they provide minimal value.
+> **Unique Contribution** shows how many domains would disappear if that source were removed. Sources with low unique counts (~50 or less) provide minimal value and should be considered for removal.
 
 <!-- STATS_END -->
 
