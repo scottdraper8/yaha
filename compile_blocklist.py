@@ -587,7 +587,7 @@ def update_readme(
 </div>
 
 > [!NOTE]
-> **Unique Contribution** shows how many domains would disappear if that source were removed. These are domains that appear in only one list. Two files are generated: `hosts` (general only) and `hosts_nsfw` (includes NSFW). Sources with low unique counts (~50 or less) provide minimal value and should be considered for removal.
+> **Unique Contribution** shows how many domains would disappear if that source were removed. Sources with low unique counts (~50 or less) provide minimal value and should be considered for removal.
 
 <!-- STATS_END -->"""
 
