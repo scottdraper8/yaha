@@ -90,9 +90,9 @@ flowchart LR
 
 <div align="center">
 
-![General Domains](https://img.shields.io/badge/General_Domains-9,292,083-8be9fd?style=for-the-badge&labelColor=6272a4)
-![Total Domains](https://img.shields.io/badge/Total_Domains_(with_NSFW)-4,930,778-ff79c6?style=for-the-badge&labelColor=6272a4)
-![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--22_00:09:49_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
+![General Domains](https://img.shields.io/badge/General_Domains-9,292,064-8be9fd?style=for-the-badge&labelColor=6272a4)
+![Total Domains](https://img.shields.io/badge/Total_Domains_(with_NSFW)-4,930,777-ff79c6?style=for-the-badge&labelColor=6272a4)
+![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--22_01:21:40_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
 
 ### General Protection Lists
 
@@ -106,7 +106,7 @@ flowchart LR
 </thead>
 <tbody>
 <tr><td><a href='https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts'>Steven Black's Unified Hosts</a></td><td>88,502</td><td>0</td></tr>
-<tr><td><a href='https://big.oisd.nl'>OISD Big List</a></td><td>261,095</td><td>0</td></tr>
+<tr><td><a href='https://big.oisd.nl'>OISD Big List</a></td><td>261,002</td><td>0</td></tr>
 <tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt'>HaGeZi Multi-pro Extended</a></td><td>329,424</td><td>0</td></tr>
 <tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt'>HaGeZi Threat Intelligence</a></td><td>627,242</td><td>0</td></tr>
 <tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/dga30.txt'>HaGeZi DGA 30 Days</a></td><td>2,280,801</td><td>0</td></tr>
@@ -128,7 +128,7 @@ flowchart LR
 <tr><td><a href='https://raw.githubusercontent.com/AssoEchap/stalkerware-indicators/master/generated/hosts'>Stalkerware Indicators</a></td><td>919</td><td>0</td></tr>
 <tr><td><a href='https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/data/hosts/spy.txt'>Windows Spy Blocker</a></td><td>347</td><td>0</td></tr>
 <tr><td><a href='https://v.firebog.net/hosts/static/w3kbl.txt'>W3KBL</a></td><td>355</td><td>0</td></tr>
-<tr><td><a href='https://malware-filter.gitlab.io/malware-filter/phishing-filter-hosts.txt'>Phishing Hosts</a></td><td>20,596</td><td>0</td></tr>
+<tr><td><a href='https://malware-filter.gitlab.io/malware-filter/phishing-filter-hosts.txt'>Phishing Hosts</a></td><td>20,635</td><td>0</td></tr>
 </tbody>
 </table>
 
@@ -143,7 +143,7 @@ flowchart LR
 </tr>
 </thead>
 <tbody>
-<tr><td><a href='https://nsfw.oisd.nl'>OISD NSFW</a></td><td>408,648</td><td>0</td></tr>
+<tr><td><a href='https://nsfw.oisd.nl'>OISD NSFW</a></td><td>408,646</td><td>0</td></tr>
 <tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/nsfw.txt'>HaGeZi NSFW</a></td><td>85,511</td><td>0</td></tr>
 <tr><td><a href='https://v.firebog.net/hosts/Prigent-Adult.txt'>Prigent Adult</a></td><td>4,646,353</td><td>0</td></tr>
 </tbody>
