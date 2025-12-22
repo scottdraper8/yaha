@@ -37,18 +37,18 @@ jobs:
       - name: Run blocklist compiler
         id: compile
         run: |
+          set +e  # Don't exit on error
           python compile_blocklist.py
           EXIT_CODE=$?
+          set -e  # Re-enable exit on error
 
           # Exit code 0 = no changes, 1 = updated, 2+ = error
           if [ $EXIT_CODE -eq 0 ]; then
             echo "changed=false" >> $GITHUB_OUTPUT
             echo "✓ No domain changes detected"
-            exit 0
           elif [ $EXIT_CODE -eq 1 ]; then
             echo "changed=true" >> $GITHUB_OUTPUT
             echo "✓ Domain content changed"
-            exit 0
           else
             echo "changed=false" >> $GITHUB_OUTPUT
             echo "✗ Compilation failed with exit code $EXIT_CODE"
