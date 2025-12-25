@@ -60,8 +60,8 @@ flowchart LR
         Dedupe --> Stats["📊 Calculate<br/>Statistics"]
     end
 
-    Stats --> Output1[("📄 hosts<br/>(General Only)<br/>3.8MM domains")]
-    Stats --> Output2[("🔞 hosts_nsfw<br/>(Complete)<br/>8.6MM domains")]
+    Stats --> Output1[("📄 hosts<br/>(General Only)<br/>3.8M domains")]
+    Stats --> Output2[("🔞 hosts_nsfw<br/>(Complete)<br/>8.6M domains")]
     Stats --> README["📖 Update README<br/>(Dual Tables)"]
 
     Output1 --> Apps["📱 Applications<br/>(TrackerControl, etc)"]
