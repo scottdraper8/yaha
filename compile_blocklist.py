@@ -533,11 +533,11 @@ def update_readme(
             rf"\g<1>{nsfw_formatted} domains\g<2>",
         ),
         (
-            r'(Output1\[\("📄 hosts<br/>\(General Only\)<br/>)[^d]+(M domains"\)\])',
+            r'(Output1\[\("📄 hosts<br/>\(General Only\)<br/>)[0-9.]+M( domains"\)\])',
             rf"\g<1>{general_formatted}\g<2>",
         ),
         (
-            r'(Output2\[\("🔞 hosts_nsfw<br/>\(Complete\)<br/>)[^d]+(M domains"\)\])',
+            r'(Output2\[\("🔞 hosts_nsfw<br/>\(Complete\)<br/>)[0-9.]+M( domains"\)\])',
             rf"\g<1>{nsfw_formatted}\g<2>",
         ),
     ]
