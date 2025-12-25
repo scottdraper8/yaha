@@ -525,19 +525,19 @@ def update_readme(
 
     replacements = [
         (
-            r"(Use `hosts` for general protection without NSFW blocking \(~)[^)]+(\))",
+            r"(Use `hosts` for general protection \(~)[^)]+(\))",
             rf"\g<1>{general_formatted} domains\g<2>",
         ),
         (
-            r"(Use `hosts_nsfw` for complete protection including NSFW blocking \(~)[^)]+(\))",
+            r"(Use `hosts_nsfw` for all the same domains in `hosts` \*\*\*plus\*\*\* adult content \(\*\*~)[^)]+(\*\*\))",
             rf"\g<1>{nsfw_formatted} domains\g<2>",
         ),
         (
-            r'(Output1\[\("📄 hosts<br/>\(General Only\)<br/>~)[^"]+( domains"\)\])',
+            r'(Output1\[\("📄 hosts<br/>\(General Only\)<br/>)[^d]+(M domains"\)\])',
             rf"\g<1>{general_formatted}\g<2>",
         ),
         (
-            r'(Output2\[\("🔞 hosts_nsfw<br/>\(Complete\)<br/>~)[^"]+( domains"\)\])',
+            r'(Output2\[\("🔞 hosts_nsfw<br/>\(Complete\)<br/>)[^d]+(M domains"\)\])',
             rf"\g<1>{nsfw_formatted}\g<2>",
         ),
     ]
