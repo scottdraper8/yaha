@@ -125,11 +125,6 @@
     "nsfw": false
   },
   {
-    "name": "W3KBL",
-    "url": "https://v.firebog.net/hosts/static/w3kbl.txt",
-    "nsfw": false
-  },
-  {
     "name": "Phishing Hosts",
     "url": "https://malware-filter.gitlab.io/malware-filter/phishing-filter-hosts.txt",
     "nsfw": false
