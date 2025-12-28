@@ -33,7 +33,7 @@ https://github.com/scottdraper8/yaha/releases/download/latest/hosts_nsfw
 > Copy either URL into any application that supports hosts-based blocking:
 >
 > - Use `hosts` for general protection (~3.7M domains)
-> - Use `hosts_nsfw` for all the same domains in `hosts` ***plus*** adult content (**~8.5M domains**)
+> - Use `hosts_nsfw` for all the same domains in `hosts` ***plus*** adult content (**~8.6M domains**)
 
 ## How It Works
 
@@ -61,7 +61,7 @@ flowchart LR
     end
 
     Stats --> Output1[("📄 hosts<br/>(General Only)<br/>3.7M domains")]
-    Stats --> Output2[("🔞 hosts_nsfw<br/>(Complete)<br/>8.5M domains")]
+    Stats --> Output2[("🔞 hosts_nsfw<br/>(Complete)<br/>8.6M domains")]
     Stats --> README["📖 Update README<br/>(Dual Tables)"]
 
     Output1 --> Apps["📱 Applications<br/>(TrackerControl, etc)"]
@@ -88,9 +88,9 @@ flowchart LR
 
 <div align="center">
 
-![General Domains](https://img.shields.io/badge/General_Domains-3,716,213-8be9fd?style=for-the-badge&labelColor=6272a4)
-![Total Domains](https://img.shields.io/badge/Total_Domains_(with_NSFW)-8,548,830-ff79c6?style=for-the-badge&labelColor=6272a4)
-![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--28_01:27:02_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
+![General Domains](https://img.shields.io/badge/General_Domains-3,716,432-8be9fd?style=for-the-badge&labelColor=6272a4)
+![Total Domains](https://img.shields.io/badge/Total_Domains_(with_NSFW)-8,556,131-ff79c6?style=for-the-badge&labelColor=6272a4)
+![Last Updated](https://img.shields.io/badge/Last_Updated-2025--12--28_06:25:58_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
 
 ### General Protection Lists
 
@@ -103,23 +103,23 @@ flowchart LR
 </tr>
 </thead>
 <tbody>
-<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/dga30.txt'>HaGeZi DGA 30 Days</a></td><td>2,179,200</td><td>2,157,690</td></tr>
-<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt'>HaGeZi Threat Intelligence</a></td><td>628,522</td><td>419,262</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/dga30.txt'>HaGeZi DGA 30 Days</a></td><td>2,179,200</td><td>2,157,686</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt'>HaGeZi Threat Intelligence</a></td><td>628,522</td><td>419,191</td></tr>
 <tr><td><a href='https://v.firebog.net/hosts/RPiList-Malware.txt'>RPiList Malware</a></td><td>302,562</td><td>236,962</td></tr>
-<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt'>HaGeZi Multi-pro Extended</a></td><td>326,929</td><td>193,072</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt'>HaGeZi Multi-pro Extended</a></td><td>326,929</td><td>193,075</td></tr>
 <tr><td><a href='https://raw.githubusercontent.com/RooneyMcNibNug/pihole-stuff/master/SNAFU.txt'>SNAFU</a></td><td>71,907</td><td>65,813</td></tr>
-<tr><td><a href='https://v.firebog.net/hosts/RPiList-Phishing.txt'>RPiList Phishing</a></td><td>163,279</td><td>57,494</td></tr>
+<tr><td><a href='https://v.firebog.net/hosts/RPiList-Phishing.txt'>RPiList Phishing</a></td><td>163,279</td><td>57,566</td></tr>
 <tr><td><a href='https://v.firebog.net/hosts/AdguardDNS.txt'>AdGuard DNS Filter</a></td><td>121,757</td><td>43,324</td></tr>
-<tr><td><a href='https://big.oisd.nl'>OISD Big List</a></td><td>223,280</td><td>33,374</td></tr>
+<tr><td><a href='https://big.oisd.nl'>OISD Big List</a></td><td>223,393</td><td>33,425</td></tr>
 <tr><td><a href='https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt'>Anudeep's Blacklist</a></td><td>42,516</td><td>31,136</td></tr>
 <tr><td><a href='https://hostfiles.frogeye.fr/firstparty-trackers-hosts.txt'>First-Party Trackers</a></td><td>31,837</td><td>23,056</td></tr>
-<tr><td><a href='https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts'>Steven Black's Unified Hosts</a></td><td>86,830</td><td>17,886</td></tr>
+<tr><td><a href='https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts'>Steven Black's Unified Hosts</a></td><td>86,830</td><td>17,970</td></tr>
 <tr><td><a href='https://v.firebog.net/hosts/Easyprivacy.txt'>EasyPrivacy</a></td><td>42,222</td><td>16,681</td></tr>
 <tr><td><a href='https://v.firebog.net/hosts/Prigent-Crypto.txt'>Prigent Crypto</a></td><td>16,288</td><td>15,885</td></tr>
 <tr><td><a href='https://lists.cyberhost.uk/malware.txt'>Cyber Threat Coalition Malware</a></td><td>20,245</td><td>14,983</td></tr>
 <tr><td><a href='https://raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt'>Spam404</a></td><td>8,140</td><td>6,448</td></tr>
 <tr><td><a href='https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts'>hostsVN</a></td><td>19,186</td><td>4,596</td></tr>
-<tr><td><a href='https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts.txt'>KADhosts</a></td><td>53,904</td><td>3,468</td></tr>
+<tr><td><a href='https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts.txt'>KADhosts</a></td><td>53,600</td><td>3,560</td></tr>
 <tr><td><a href='https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareHosts.txt'>DandelionSprout Anti-Malware</a></td><td>15,187</td><td>3,078</td></tr>
 <tr><td><a href='https://raw.githubusercontent.com/matomo-org/referrer-spam-blacklist/master/spammers.txt'>Matomo Referrer Spam</a></td><td>2,322</td><td>1,975</td></tr>
 <tr><td><a href='https://v.firebog.net/hosts/Prigent-Ads.txt'>Prigent Ads</a></td><td>4,270</td><td>1,146</td></tr>
@@ -140,9 +140,9 @@ flowchart LR
 </tr>
 </thead>
 <tbody>
-<tr><td><a href='https://v.firebog.net/hosts/Prigent-Adult.txt'>Prigent Adult</a></td><td>4,646,353</td><td>4,419,728</td></tr>
-<tr><td><a href='https://nsfw.oisd.nl'>OISD NSFW</a></td><td>378,251</td><td>199,375</td></tr>
-<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/nsfw.txt'>HaGeZi NSFW</a></td><td>83,722</td><td>34,863</td></tr>
+<tr><td><a href='https://v.firebog.net/hosts/Prigent-Adult.txt'>Prigent Adult</a></td><td>4,646,353</td><td>4,417,196</td></tr>
+<tr><td><a href='https://nsfw.oisd.nl'>OISD NSFW</a></td><td>388,688</td><td>206,460</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/nsfw.txt'>HaGeZi NSFW</a></td><td>83,715</td><td>34,396</td></tr>
 </tbody>
 </table>
 
