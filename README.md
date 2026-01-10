@@ -56,7 +56,8 @@ flowchart LR
     subgraph Process["⚙️ YAHA Processing"]
         direction LR
         Fetch["🔄 Concurrent<br/>Fetch"] --> Parse["📝 Parse<br/>Formats"]
-        Parse --> Dedupe["🔍 Deduplicate<br/>& Separate"]
+        Parse --> Filter["✅ Whitelist<br/>Filter"]
+        Filter --> Dedupe["🔍 Deduplicate<br/>& Separate"]
         Dedupe --> Stats["📊 Calculate<br/>Statistics"]
     end
 
@@ -88,9 +89,9 @@ flowchart LR
 
 <div align="center">
 
-![General Domains](https://img.shields.io/badge/General_Domains-3,445,799-8be9fd?style=for-the-badge&labelColor=6272a4)
-![Total Domains](https://img.shields.io/badge/Total_Domains_(with_NSFW)-8,235,407-ff79c6?style=for-the-badge&labelColor=6272a4)
-![Last Updated](https://img.shields.io/badge/Last_Updated-2026--01--10_18:23:35_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
+![General Domains](https://img.shields.io/badge/General_Domains-3,444,554-8be9fd?style=for-the-badge&labelColor=6272a4)
+![Total Domains](https://img.shields.io/badge/Total_Domains_(with_NSFW)-8,233,055-ff79c6?style=for-the-badge&labelColor=6272a4)
+![Last Updated](https://img.shields.io/badge/Last_Updated-2026--01--10_19:56:27_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
 
 ### General Protection Lists
 
@@ -104,22 +105,22 @@ flowchart LR
 </thead>
 <tbody>
 <tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/dga30.txt'>HaGeZi DGA 30 Days</a></td><td>1,880,902</td><td>1,857,265</td></tr>
-<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt'>HaGeZi Threat Intelligence</a></td><td>629,535</td><td>427,565</td></tr>
-<tr><td><a href='https://v.firebog.net/hosts/RPiList-Malware.txt'>RPiList Malware</a></td><td>415,376</td><td>248,384</td></tr>
-<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt'>HaGeZi Multi-pro Extended</a></td><td>334,150</td><td>202,548</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt'>HaGeZi Threat Intelligence</a></td><td>629,535</td><td>427,661</td></tr>
+<tr><td><a href='https://v.firebog.net/hosts/RPiList-Malware.txt'>RPiList Malware</a></td><td>415,376</td><td>248,396</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt'>HaGeZi Multi-pro Extended</a></td><td>334,274</td><td>202,708</td></tr>
 <tr><td><a href='https://raw.githubusercontent.com/RooneyMcNibNug/pihole-stuff/master/SNAFU.txt'>SNAFU</a></td><td>72,012</td><td>65,850</td></tr>
 <tr><td><a href='https://v.firebog.net/hosts/AdguardDNS.txt'>AdGuard DNS Filter</a></td><td>121,868</td><td>42,934</td></tr>
-<tr><td><a href='https://big.oisd.nl'>OISD Big List</a></td><td>213,281</td><td>31,637</td></tr>
+<tr><td><a href='https://big.oisd.nl'>OISD Big List</a></td><td>213,091</td><td>31,625</td></tr>
 <tr><td><a href='https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt'>Anudeep's Blacklist</a></td><td>42,516</td><td>31,070</td></tr>
 <tr><td><a href='https://hostfiles.frogeye.fr/firstparty-trackers-hosts.txt'>First-Party Trackers</a></td><td>31,937</td><td>22,931</td></tr>
-<tr><td><a href='https://v.firebog.net/hosts/RPiList-Phishing.txt'>RPiList Phishing</a></td><td>155,511</td><td>21,491</td></tr>
-<tr><td><a href='https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts'>Steven Black's Unified Hosts</a></td><td>75,486</td><td>17,903</td></tr>
+<tr><td><a href='https://v.firebog.net/hosts/RPiList-Phishing.txt'>RPiList Phishing</a></td><td>155,511</td><td>21,499</td></tr>
 <tr><td><a href='https://v.firebog.net/hosts/Easyprivacy.txt'>EasyPrivacy</a></td><td>42,270</td><td>16,610</td></tr>
+<tr><td><a href='https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts'>Steven Black's Unified Hosts</a></td><td>74,965</td><td>16,593</td></tr>
 <tr><td><a href='https://v.firebog.net/hosts/Prigent-Crypto.txt'>Prigent Crypto</a></td><td>16,288</td><td>15,859</td></tr>
 <tr><td><a href='https://lists.cyberhost.uk/malware.txt'>Cyber Threat Coalition Malware</a></td><td>20,341</td><td>15,107</td></tr>
-<tr><td><a href='https://raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt'>Spam404</a></td><td>8,140</td><td>6,468</td></tr>
+<tr><td><a href='https://raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt'>Spam404</a></td><td>8,140</td><td>6,469</td></tr>
 <tr><td><a href='https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts'>hostsVN</a></td><td>19,202</td><td>4,638</td></tr>
-<tr><td><a href='https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts.txt'>KADhosts</a></td><td>44,353</td><td>4,099</td></tr>
+<tr><td><a href='https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts.txt'>KADhosts</a></td><td>44,353</td><td>3,541</td></tr>
 <tr><td><a href='https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareHosts.txt'>DandelionSprout Anti-Malware</a></td><td>15,187</td><td>3,103</td></tr>
 <tr><td><a href='https://raw.githubusercontent.com/matomo-org/referrer-spam-blacklist/master/spammers.txt'>Matomo Referrer Spam</a></td><td>2,322</td><td>1,964</td></tr>
 <tr><td><a href='https://v.firebog.net/hosts/Prigent-Ads.txt'>Prigent Ads</a></td><td>4,270</td><td>1,139</td></tr>
@@ -140,9 +141,9 @@ flowchart LR
 </tr>
 </thead>
 <tbody>
-<tr><td><a href='https://v.firebog.net/hosts/Prigent-Adult.txt'>Prigent Adult</a></td><td>4,646,389</td><td>4,449,143</td></tr>
-<tr><td><a href='https://nsfw.oisd.nl'>OISD NSFW</a></td><td>301,572</td><td>162,157</td></tr>
-<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/nsfw.txt'>HaGeZi NSFW</a></td><td>78,613</td><td>34,342</td></tr>
+<tr><td><a href='https://v.firebog.net/hosts/Prigent-Adult.txt'>Prigent Adult</a></td><td>4,646,389</td><td>4,449,681</td></tr>
+<tr><td><a href='https://nsfw.oisd.nl'>OISD NSFW</a></td><td>299,749</td><td>161,049</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/nsfw.txt'>HaGeZi NSFW</a></td><td>78,613</td><td>34,448</td></tr>
 </tbody>
 </table>
 
@@ -208,6 +209,30 @@ Each entry requires:
 
 - `name`: Display name for the blocklist
 - `url`: Direct URL to the blocklist file
+
+#### Whitelist Configuration
+
+Domains can be excluded from blocklists using `whitelist.txt`. This is useful for preventing false positives or allowing specific domains.
+
+**whitelist.txt Format:**
+
+```text
+# One domain per line
+# Lines starting with # are comments
+
+# Exact domain match
+example.com
+
+# Wildcard match (all subdomains)
+*.aurorastore.org
+```
+
+**Supported patterns:**
+
+- **Exact match**: `example.com` - blocks only that exact domain
+- **Wildcard match**: `*.example.com` - blocks the domain and all subdomains
+
+Whitelisted domains are filtered during the streaming deduplication pass with minimal performance overhead (O(1) for exact matches, O(W) for wildcards where W = number of wildcard patterns).
 
 ### Performance Configuration
 

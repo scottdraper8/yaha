@@ -1,0 +1,12 @@
+# YAHA Whitelist
+# Domains listed here will NOT be added to blocklists
+# Supports exact matches and wildcards (*.example.com)
+#
+# Format:
+#   - One domain per line
+#   - Lines starting with # are comments
+#   - Wildcards: Use *.domain.com to match all subdomains
+#   - Exact: Use domain.com to match only that exact domain
+
+# Aurora Store - Open source alternative app store
+*.aurorastore.org
