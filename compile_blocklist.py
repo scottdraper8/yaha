@@ -54,6 +54,37 @@ class ContributionStats:
     contrib_general: dict[str, int]
 
 
+@dataclass
+class Whitelist:
+    """Whitelist containing exact domains and wildcard patterns."""
+
+    exact: set[str]
+    wildcards: list[str]
+
+    def is_whitelisted(self, domain: str) -> bool:
+        """
+        Check if domain matches whitelist.
+
+        Args:
+            domain: Domain to check
+
+        Returns:
+            True if domain is whitelisted
+        """
+        # Check exact match first (O(1))
+        if domain in self.exact:
+            return True
+
+        # Check wildcard patterns (O(W) where W is number of wildcards)
+        for pattern in self.wildcards:
+            if pattern.startswith("*."):
+                # Match *.example.com against example.com and all subdomains
+                suffix = pattern[2:]  # Remove *.
+                if domain == suffix or domain.endswith("." + suffix):
+                    return True
+        return False
+
+
 # Domain validation per RFC 1035: max 253 chars total, 63 per label
 _DOMAIN_REGEX = r"[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*"
 
@@ -204,6 +235,45 @@ def load_blocklists() -> list[dict[str, str]]:
     return blocklists
 
 
+def load_whitelist(whitelist_path: Path = Path("whitelist.txt")) -> Whitelist:
+    """
+    Load whitelist from file.
+
+    Format: one domain per line, supports wildcards (*.example.com)
+    Lines starting with # are comments.
+
+    Args:
+        whitelist_path: Path to whitelist file
+
+    Returns:
+        Whitelist object containing exact domains and wildcard patterns
+    """
+    exact: set[str] = set()
+    wildcards: list[str] = []
+
+    if not whitelist_path.exists():
+        print(f"Note: {whitelist_path} not found, proceeding without whitelist")
+        return Whitelist(exact=exact, wildcards=wildcards)
+
+    with whitelist_path.open() as f:
+        for line in f:
+            line = line.strip()
+            # Skip empty lines and comments
+            if not line or line.startswith("#"):
+                continue
+
+            domain = line.lower()
+            if domain.startswith("*."):
+                wildcards.append(domain)
+            else:
+                exact.add(domain)
+
+    total = len(exact) + len(wildcards)
+    if total > 0:
+        print(f"Loaded whitelist: {len(exact)} exact, {len(wildcards)} wildcard(s)")
+    return Whitelist(exact=exact, wildcards=wildcards)
+
+
 def filter_blocklists_by_nsfw(
     blocklists: list[dict[str, str]], include_nsfw: bool
 ) -> list[dict[str, str]]:
@@ -278,7 +348,8 @@ def collect_blocklists_annotated(
 def process_annotated_pipeline(
     pipeline: PipelineFiles,
     id_to_name: dict[int, str],
-) -> tuple[int, int, ContributionStats]:
+    whitelist: Whitelist,
+) -> tuple[int, int, ContributionStats, int]:
     """
     Process annotated stream through sort → streaming group-by pipeline.
 
@@ -286,6 +357,7 @@ def process_annotated_pipeline(
     - Writes deduplicated domains to ALL output (sorted)
     - Writes deduplicated domains to GENERAL output (sorted, derived in same pass)
     - Computes per-list contribution counters for both aggregates
+    - Filters out whitelisted domains
 
     Contribution metric: domains appearing in exactly one list within each aggregate.
     This matches "how many domains would disappear if list were removed."
@@ -293,9 +365,10 @@ def process_annotated_pipeline(
     Args:
         pipeline: PipelineFiles containing input/output paths
         id_to_name: Mapping of list IDs to names
+        whitelist: Whitelist object for domain filtering
 
     Returns:
-        Tuple of (all_count, general_count, ContributionStats)
+        Tuple of (all_count, general_count, ContributionStats, whitelisted_count)
     """
     # Sort by domain (primary), then list_id (secondary) for consistent grouping
     print("  Sorting annotated stream...")
@@ -316,6 +389,7 @@ def process_annotated_pipeline(
     print("  Streaming group-by with contribution calculation...")
     all_count = 0
     general_count = 0
+    whitelisted_count = 0
     contrib_all: dict[str, int] = {name: 0 for name in id_to_name.values()}
     contrib_general: dict[str, int] = {name: 0 for name in id_to_name.values()}
 
@@ -330,8 +404,13 @@ def process_annotated_pipeline(
 
         def flush_domain():
             """Process accumulated data for current domain and write outputs."""
-            nonlocal all_count, general_count
+            nonlocal all_count, general_count, whitelisted_count
             if current_domain is None:
+                return
+
+            # Check whitelist - skip if domain is whitelisted
+            if whitelist.is_whitelisted(current_domain):
+                whitelisted_count += 1
                 return
 
             # Write to ALL output (always)
@@ -375,7 +454,7 @@ def process_annotated_pipeline(
         flush_domain()
 
     stats = ContributionStats(contrib_all=contrib_all, contrib_general=contrib_general)
-    return all_count, general_count, stats
+    return all_count, general_count, stats, whitelisted_count
 
 
 def format_domain_count(count: int) -> str:
@@ -618,6 +697,9 @@ def main() -> int:
         blocklists = load_blocklists()
         print(f"Loaded {len(blocklists)} blocklist(s)")
 
+        print("\nLoading whitelist...")
+        whitelist = load_whitelist()
+
         blocklists_dir = Path("blocklists")
         blocklists_dir.mkdir(exist_ok=True)
 
@@ -632,12 +714,14 @@ def main() -> int:
         )
 
         print("\nStep 2: Processing through sort → group-by pipeline...")
-        all_count, general_count, contribution_stats = process_annotated_pipeline(
-            pipeline, id_to_name
+        all_count, general_count, contribution_stats, whitelisted_count = (
+            process_annotated_pipeline(pipeline, id_to_name, whitelist)
         )
 
         print(f"\n  Total unique domains (general): {general_count:,}")
         print(f"  Total unique domains (all with NSFW): {all_count:,}")
+        if whitelisted_count > 0:
+            print(f"  Whitelisted domains (filtered): {whitelisted_count:,}")
 
         print("\nStep 3: Generating hosts files...")
         timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
