@@ -91,7 +91,7 @@ flowchart LR
 
 ![General Domains](https://img.shields.io/badge/General_Domains-3,444,554-8be9fd?style=for-the-badge&labelColor=6272a4)
 ![Total Domains](https://img.shields.io/badge/Total_Domains_(with_NSFW)-8,233,055-ff79c6?style=for-the-badge&labelColor=6272a4)
-![Last Updated](https://img.shields.io/badge/Last_Updated-2026--01--10_19:56:27_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
+![Last Updated](https://img.shields.io/badge/Last_Updated-2026--01--10_20:00:24_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
 
 ### General Protection Lists
 
@@ -142,8 +142,8 @@ flowchart LR
 </thead>
 <tbody>
 <tr><td><a href='https://v.firebog.net/hosts/Prigent-Adult.txt'>Prigent Adult</a></td><td>4,646,389</td><td>4,449,681</td></tr>
-<tr><td><a href='https://nsfw.oisd.nl'>OISD NSFW</a></td><td>299,749</td><td>161,049</td></tr>
-<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/nsfw.txt'>HaGeZi NSFW</a></td><td>78,613</td><td>34,448</td></tr>
+<tr><td><a href='https://nsfw.oisd.nl'>OISD NSFW</a></td><td>299,749</td><td>161,041</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/nsfw.txt'>HaGeZi NSFW</a></td><td>78,623</td><td>34,448</td></tr>
 </tbody>
 </table>
 
