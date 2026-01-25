@@ -70,9 +70,42 @@ jobs:
           STAGED_AUTOMATED=0
           BATCH_COUNT=0
 
+          # Cherry-pick behavior is normalized for merge commits.
+          attempt_pick() {
+            local commit="$1"
+            shift
+            if ! git cherry-pick "$@" "$commit"; then
+              if [ -f .git/CHERRY_PICK_HEAD ] && git diff --quiet; then
+                git cherry-pick --skip
+              else
+                exit 1
+              fi
+            fi
+          }
+
+          pick_commit() {
+            local commit="$1"
+            local mode="$2"
+            local parent_count
+            parent_count=$(git show -s --format=%P "$commit" | wc -w | tr -d ' ')
+            if [ "$parent_count" -gt 1 ]; then
+              if [ "$mode" = "no-commit" ]; then
+                attempt_pick "$commit" -m 1 --no-commit
+              else
+                attempt_pick "$commit" -m 1
+              fi
+            else
+              if [ "$mode" = "no-commit" ]; then
+                attempt_pick "$commit" --no-commit
+              else
+                attempt_pick "$commit"
+              fi
+            fi
+          }
+
           for COMMIT in $PREV_COMMITS; do
             if git log -1 --format=%B "$COMMIT" | grep -q "\[automated\]"; then
-              git cherry-pick --no-commit "$COMMIT"
+              pick_commit "$COMMIT" "no-commit"
               STAGED_AUTOMATED=1
               BATCH_COUNT=$((BATCH_COUNT + 1))
             else
@@ -85,7 +118,7 @@ jobs:
                 STAGED_AUTOMATED=0
                 BATCH_COUNT=0
               fi
-              git cherry-pick "$COMMIT"
+              pick_commit "$COMMIT"
             fi
           done
 
@@ -100,7 +133,7 @@ jobs:
           # Commits after previous year are replayed
           POST_COMMITS=$(git rev-list --reverse "${LAST_COMMIT}..${ORIGINAL_HEAD}")
           for COMMIT in $POST_COMMITS; do
-            git cherry-pick "$COMMIT"
+            pick_commit "$COMMIT"
           done
 
           # Force push to main
