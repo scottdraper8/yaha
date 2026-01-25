@@ -102,7 +102,7 @@ jobs:
             local author_date="$3"
             local committer_date="$4"
             GIT_AUTHOR_DATE="$author_date" GIT_COMMITTER_DATE="$committer_date" \
-              git commit --no-gpg-sign --author="$author" -C "$commit"
+              git commit --no-gpg-sign --allow-empty --author="$author" -C "$commit"
           }
 
           load_commit_meta() {
