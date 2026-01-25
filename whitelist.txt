@@ -10,3 +10,4 @@
 
 # Aurora Store - Open source alternative app store
 *.aurorastore.org
+*.auroraoss.com
