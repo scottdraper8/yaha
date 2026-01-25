@@ -40,10 +40,19 @@ jobs:
           fi
 
           # Get the commit before the first commit of previous year
-          PARENT_COMMIT=$(git rev-parse ${FIRST_COMMIT}^)
+          PARENT_COMMIT=$(git rev-parse "${FIRST_COMMIT}^" 2>/dev/null || true)
+
+          if [ -z "$PARENT_COMMIT" ]; then
+            echo "Previous year starts at root commit; squashing from repository root."
+            RESET_TARGET="--root"
+            LOG_RANGE="--root"
+          else
+            RESET_TARGET="${PARENT_COMMIT}"
+            LOG_RANGE="${PARENT_COMMIT}..HEAD"
+          fi
 
           # Count automated commits to squash
-          AUTOMATED_COUNT=$(git log ${PARENT_COMMIT}..HEAD --grep="\[automated\]" --oneline | wc -l)
+          AUTOMATED_COUNT=$(git log ${LOG_RANGE} --grep="\[automated\]" --oneline | wc -l | tr -d ' ')
 
           if [ "$AUTOMATED_COUNT" -eq 0 ]; then
             echo "No automated commits to squash"
@@ -56,7 +65,7 @@ jobs:
           git checkout -b temp-squash
 
           # Soft reset to parent commit (keeps all changes staged)
-          git reset --soft ${PARENT_COMMIT}
+          git reset --soft ${RESET_TARGET}
 
           # Get final state stats
           DOMAIN_COUNT=$(grep -v '^#' hosts | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
