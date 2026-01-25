@@ -106,7 +106,7 @@ jobs:
           # Force push to main
           git push origin temp-squash:main --force
 
-          echo "✓ Successfully squashed ${AUTOMATED_COUNT} commits from ${PREVIOUS_YEAR}"
+          echo "✓ Successfully squashed ${TOTAL_AUTOMATED_COUNT} commits from ${PREVIOUS_YEAR}"
 
       - name: Cleanup
         if: always()
