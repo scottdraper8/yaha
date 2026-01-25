@@ -68,38 +68,51 @@ jobs:
           PREV_COMMITS=$(git rev-list --reverse ${PREV_RANGE})
           STAGED_BOT=0
           BATCH_COUNT=0
+          LAST_BOT_AUTHOR_DATE=""
+          LAST_BOT_COMMITTER_DATE=""
 
           attempt_pick() {
             local commit="$1"
             shift
-            if ! git cherry-pick "$@" "$commit"; then
-              if [ -f .git/CHERRY_PICK_HEAD ] && git diff --quiet; then
-                git cherry-pick --skip
-              else
-                git cherry-pick --abort
-                exit 1
-              fi
+            if git cherry-pick "$@" "$commit"; then
+              return 0
             fi
+            if [ -f .git/CHERRY_PICK_HEAD ] && git diff --quiet; then
+              git cherry-pick --skip
+              return 1
+            fi
+            git cherry-pick --abort
+            exit 1
           }
 
-          pick_commit() {
+          apply_commit() {
             local commit="$1"
-            local mode="$2"
             local parent_count
             parent_count=$(git show -s --format=%P "$commit" | wc -w | tr -d ' ')
             if [ "$parent_count" -gt 1 ]; then
-              if [ "$mode" = "no-commit" ]; then
-                attempt_pick "$commit" -m 1 --no-commit
-              else
-                attempt_pick "$commit" -m 1
-              fi
+              attempt_pick "$commit" -m 1 --no-commit
             else
-              if [ "$mode" = "no-commit" ]; then
-                attempt_pick "$commit" --no-commit
-              else
-                attempt_pick "$commit"
-              fi
+              attempt_pick "$commit" --no-commit
             fi
+          }
+
+          commit_with_dates() {
+            local commit="$1"
+            local author="$2"
+            local author_date="$3"
+            local committer_date="$4"
+            GIT_AUTHOR_DATE="$author_date" GIT_COMMITTER_DATE="$committer_date" \
+              git commit --no-gpg-sign --author="$author" -C "$commit"
+          }
+
+          load_commit_meta() {
+            local commit="$1"
+            local meta
+            meta=$(git show -s --format='%an <%ae>|%aI|%cI' "$commit")
+            AUTHOR_INFO=${meta%%|*}
+            META_REST=${meta#*|}
+            AUTHOR_DATE=${META_REST%%|*}
+            COMMITTER_DATE=${META_REST#*|}
           }
 
           get_domain_count() {
@@ -111,6 +124,8 @@ jobs:
           }
 
           commit_squash_batch() {
+            local author_date="$1"
+            local committer_date="$2"
             local domain_count
             if git diff --cached --quiet; then
               STAGED_BOT=0
@@ -118,35 +133,44 @@ jobs:
               return
             fi
             domain_count=$(get_domain_count)
-            git commit -m "Archive: Blocklist updates for ${PREVIOUS_YEAR}" \
-                       -m "Squashed ${BATCH_COUNT} ${BOT_AUTHOR_LABEL} commits from ${PREVIOUS_YEAR}." \
-                       -m "Final state: ${domain_count} domains blocked." \
-                       -m "This automated cleanup runs annually to keep repository history manageable."
+            GIT_AUTHOR_DATE="$author_date" GIT_COMMITTER_DATE="$committer_date" \
+              git commit -m "Archive: Blocklist updates for ${PREVIOUS_YEAR}" \
+                         -m "Squashed ${BATCH_COUNT} ${BOT_AUTHOR_LABEL} commits from ${PREVIOUS_YEAR}." \
+                         -m "Final state: ${domain_count} domains blocked." \
+                         -m "This automated cleanup runs annually to keep repository history manageable."
             STAGED_BOT=0
             BATCH_COUNT=0
           }
 
           for COMMIT in $PREV_COMMITS; do
-            AUTHOR_INFO=$(git show -s --format='%an <%ae>' "$COMMIT")
+            load_commit_meta "$COMMIT"
             if printf '%s' "$AUTHOR_INFO" | grep -Eq "$BOT_AUTHOR_REGEX"; then
-              pick_commit "$COMMIT" "no-commit"
-              STAGED_BOT=1
-              BATCH_COUNT=$((BATCH_COUNT + 1))
+              if apply_commit "$COMMIT"; then
+                STAGED_BOT=1
+                BATCH_COUNT=$((BATCH_COUNT + 1))
+                LAST_BOT_AUTHOR_DATE="$AUTHOR_DATE"
+                LAST_BOT_COMMITTER_DATE="$COMMITTER_DATE"
+              fi
             else
               if [ "$STAGED_BOT" -eq 1 ]; then
-                commit_squash_batch
+                commit_squash_batch "$LAST_BOT_AUTHOR_DATE" "$LAST_BOT_COMMITTER_DATE"
               fi
-              pick_commit "$COMMIT"
+              if apply_commit "$COMMIT"; then
+                commit_with_dates "$COMMIT" "$AUTHOR_INFO" "$AUTHOR_DATE" "$COMMITTER_DATE"
+              fi
             fi
           done
 
           if [ "$STAGED_BOT" -eq 1 ]; then
-            commit_squash_batch
+            commit_squash_batch "$LAST_BOT_AUTHOR_DATE" "$LAST_BOT_COMMITTER_DATE"
           fi
 
           POST_COMMITS=$(git rev-list --reverse "${LAST_COMMIT}..${ORIGINAL_HEAD}")
           for COMMIT in $POST_COMMITS; do
-            pick_commit "$COMMIT"
+            load_commit_meta "$COMMIT"
+            if apply_commit "$COMMIT"; then
+              commit_with_dates "$COMMIT" "$AUTHOR_INFO" "$AUTHOR_DATE" "$COMMITTER_DATE"
+            fi
           done
 
           git push origin temp-squash:main --force
