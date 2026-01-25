@@ -40,7 +40,7 @@ jobs:
           fi
 
           # Get the commit before the first commit of previous year
-          PARENT_COMMIT=$(git rev-parse "${FIRST_COMMIT}^" 2>/dev/null || true)
+          PARENT_COMMIT=$(git rev-parse --verify "${FIRST_COMMIT}^" 2>/dev/null || true)
 
           if [ -z "$PARENT_COMMIT" ]; then
             echo "Previous year starts at root commit; squashing from repository root."
