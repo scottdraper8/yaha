@@ -44,9 +44,10 @@ jobs:
 
           if [ -z "$PARENT_COMMIT" ]; then
             echo "Previous year starts at root commit; squashing from repository root."
-            RESET_TARGET="--root"
+            RESET_MODE="orphan"
             LOG_RANGE="--root"
           else
+            RESET_MODE="soft"
             RESET_TARGET="${PARENT_COMMIT}"
             LOG_RANGE="${PARENT_COMMIT}..HEAD"
           fi
@@ -62,10 +63,15 @@ jobs:
           echo "Found ${AUTOMATED_COUNT} automated commits to squash"
 
           # Create a temporary branch
-          git checkout -b temp-squash
+          if [ "$RESET_MODE" = "orphan" ]; then
+            git checkout --orphan temp-squash
+            git add -A
+          else
+            git checkout -b temp-squash
 
-          # Soft reset to parent commit (keeps all changes staged)
-          git reset --soft ${RESET_TARGET}
+            # Soft reset to parent commit (keeps all changes staged)
+            git reset --soft ${RESET_TARGET}
+          fi
 
           # Get final state stats
           DOMAIN_COUNT=$(grep -v '^#' hosts | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
