@@ -25,62 +25,83 @@ jobs:
 
       - name: Squash automated commits from previous year
         run: |
-          # Get current year
+          # Current year is determined
           CURRENT_YEAR=$(date +%Y)
           PREVIOUS_YEAR=$((CURRENT_YEAR - 1))
+          ORIGINAL_HEAD=$(git rev-parse HEAD)
 
           echo "Squashing automated commits from ${PREVIOUS_YEAR}..."
 
-          # Find the first commit of the previous year
+          # First and last commits of previous year are located
           FIRST_COMMIT=$(git log --reverse --since="${PREVIOUS_YEAR}-01-01" --until="${PREVIOUS_YEAR}-12-31 23:59:59" --format="%H" | head -1)
+          LAST_COMMIT=$(git log --until="${PREVIOUS_YEAR}-12-31 23:59:59" --format="%H" -n 1)
 
           if [ -z "$FIRST_COMMIT" ]; then
             echo "No commits found in ${PREVIOUS_YEAR}, nothing to squash"
             exit 0
           fi
 
-          # Get the commit before the first commit of previous year
-          PARENT_COMMIT=$(git rev-parse --verify "${FIRST_COMMIT}^" 2>/dev/null || true)
+          # Automated commits to squash are counted
+          TOTAL_AUTOMATED_COUNT=$(git log --since="${PREVIOUS_YEAR}-01-01" --until="${PREVIOUS_YEAR}-12-31 23:59:59" --grep="\[automated\]" --oneline | wc -l | tr -d ' ')
 
-          if [ -z "$PARENT_COMMIT" ]; then
-            echo "Previous year starts at root commit; squashing from repository root."
-            RESET_MODE="orphan"
-            LOG_RANGE="--root"
-          else
-            RESET_MODE="soft"
-            RESET_TARGET="${PARENT_COMMIT}"
-            LOG_RANGE="${PARENT_COMMIT}..HEAD"
-          fi
-
-          # Count automated commits to squash
-          AUTOMATED_COUNT=$(git log ${LOG_RANGE} --grep="\[automated\]" --oneline | wc -l | tr -d ' ')
-
-          if [ "$AUTOMATED_COUNT" -eq 0 ]; then
+          if [ "$TOTAL_AUTOMATED_COUNT" -eq 0 ]; then
             echo "No automated commits to squash"
             exit 0
           fi
 
-          echo "Found ${AUTOMATED_COUNT} automated commits to squash"
+          echo "Found ${TOTAL_AUTOMATED_COUNT} automated commits to squash"
 
-          # Create a temporary branch
-          if [ "$RESET_MODE" = "orphan" ]; then
+          # Commit before first commit of previous year is resolved
+          BASE_COMMIT=$(git rev-parse --verify "${FIRST_COMMIT}^" 2>/dev/null || true)
+
+          # Temporary branch is created
+          if [ -z "$BASE_COMMIT" ]; then
+            echo "Previous year starts at root commit; history rebuilt from empty root."
             git checkout --orphan temp-squash
-            git add -A
+            git rm -rf . >/dev/null 2>&1 || true
+            git clean -fdx
+            PREV_RANGE="${LAST_COMMIT}"
           else
-            git checkout -b temp-squash
-
-            # Soft reset to parent commit (keeps all changes staged)
-            git reset --soft ${RESET_TARGET}
+            git checkout -b temp-squash "${BASE_COMMIT}"
+            PREV_RANGE="${BASE_COMMIT}..${LAST_COMMIT}"
           fi
 
-          # Get final state stats
-          DOMAIN_COUNT=$(grep -v '^#' hosts | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+          PREV_COMMITS=$(git rev-list --reverse ${PREV_RANGE})
+          STAGED_AUTOMATED=0
+          BATCH_COUNT=0
 
-          # Commit squashed changes
-          git commit -m "Archive: Blocklist updates for ${PREVIOUS_YEAR}" \
-                     -m "Squashed ${AUTOMATED_COUNT} automated commits from ${PREVIOUS_YEAR}." \
-                     -m "Final state: ${DOMAIN_COUNT} domains blocked." \
-                     -m "This automated cleanup runs annually to keep repository history manageable."
+          for COMMIT in $PREV_COMMITS; do
+            if git log -1 --format=%B "$COMMIT" | grep -q "\[automated\]"; then
+              git cherry-pick --no-commit "$COMMIT"
+              STAGED_AUTOMATED=1
+              BATCH_COUNT=$((BATCH_COUNT + 1))
+            else
+              if [ "$STAGED_AUTOMATED" -eq 1 ]; then
+                DOMAIN_COUNT=$(grep -v '^#' hosts | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+                git commit -m "Archive: Blocklist updates for ${PREVIOUS_YEAR}" \
+                           -m "Squashed ${BATCH_COUNT} automated commits from ${PREVIOUS_YEAR}." \
+                           -m "Final state: ${DOMAIN_COUNT} domains blocked." \
+                           -m "This automated cleanup runs annually to keep repository history manageable."
+                STAGED_AUTOMATED=0
+                BATCH_COUNT=0
+              fi
+              git cherry-pick "$COMMIT"
+            fi
+          done
+
+          if [ "$STAGED_AUTOMATED" -eq 1 ]; then
+            DOMAIN_COUNT=$(grep -v '^#' hosts | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+            git commit -m "Archive: Blocklist updates for ${PREVIOUS_YEAR}" \
+                       -m "Squashed ${BATCH_COUNT} automated commits from ${PREVIOUS_YEAR}." \
+                       -m "Final state: ${DOMAIN_COUNT} domains blocked." \
+                       -m "This automated cleanup runs annually to keep repository history manageable."
+          fi
+
+          # Commits after previous year are replayed
+          POST_COMMITS=$(git rev-list --reverse "${LAST_COMMIT}..${ORIGINAL_HEAD}")
+          for COMMIT in $POST_COMMITS; do
+            git cherry-pick "$COMMIT"
+          done
 
           # Force push to main
           git push origin temp-squash:main --force
