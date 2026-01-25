@@ -23,38 +23,37 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Squash automated commits from previous year
+      - name: Squash github-actions[bot] commits from previous year
         run: |
-          # Current year is determined
           CURRENT_YEAR=$(date +%Y)
           PREVIOUS_YEAR=$((CURRENT_YEAR - 1))
+          YEAR_START="${PREVIOUS_YEAR}-01-01"
+          YEAR_END="${PREVIOUS_YEAR}-12-31 23:59:59"
           ORIGINAL_HEAD=$(git rev-parse HEAD)
+          BOT_AUTHOR_LABEL="github-actions[bot]"
+          BOT_AUTHOR_REGEX="github-actions\\[bot\\]"
 
-          echo "Squashing automated commits from ${PREVIOUS_YEAR}..."
+          echo "Squashing ${BOT_AUTHOR_LABEL} commits from ${PREVIOUS_YEAR}..."
 
-          # First and last commits of previous year are located
-          FIRST_COMMIT=$(git log --reverse --since="${PREVIOUS_YEAR}-01-01" --until="${PREVIOUS_YEAR}-12-31 23:59:59" --format="%H" | head -1)
-          LAST_COMMIT=$(git log --until="${PREVIOUS_YEAR}-12-31 23:59:59" --format="%H" -n 1)
+          FIRST_COMMIT=$(git log --reverse --since="${YEAR_START}" --until="${YEAR_END}" --format="%H" | head -1)
+          LAST_COMMIT=$(git log --until="${YEAR_END}" --format="%H" -n 1)
 
           if [ -z "$FIRST_COMMIT" ]; then
             echo "No commits found in ${PREVIOUS_YEAR}, nothing to squash"
             exit 0
           fi
 
-          # Automated commits to squash are counted
-          TOTAL_AUTOMATED_COUNT=$(git log --since="${PREVIOUS_YEAR}-01-01" --until="${PREVIOUS_YEAR}-12-31 23:59:59" --grep="\[automated\]" --oneline | wc -l | tr -d ' ')
+          TOTAL_BOT_COUNT=$(git log --since="${YEAR_START}" --until="${YEAR_END}" --author="${BOT_AUTHOR_REGEX}" --oneline | wc -l | tr -d ' ')
 
-          if [ "$TOTAL_AUTOMATED_COUNT" -eq 0 ]; then
-            echo "No automated commits to squash"
+          if [ "$TOTAL_BOT_COUNT" -eq 0 ]; then
+            echo "No ${BOT_AUTHOR_LABEL} commits to squash"
             exit 0
           fi
 
-          echo "Found ${TOTAL_AUTOMATED_COUNT} automated commits to squash"
+          echo "Found ${TOTAL_BOT_COUNT} ${BOT_AUTHOR_LABEL} commits to squash"
 
-          # Commit before first commit of previous year is resolved
           BASE_COMMIT=$(git rev-parse --verify "${FIRST_COMMIT}^" 2>/dev/null || true)
 
-          # Temporary branch is created
           if [ -z "$BASE_COMMIT" ]; then
             echo "Previous year starts at root commit; history rebuilt from empty root."
             git checkout --orphan temp-squash
@@ -67,10 +66,9 @@ jobs:
           fi
 
           PREV_COMMITS=$(git rev-list --reverse ${PREV_RANGE})
-          STAGED_AUTOMATED=0
+          STAGED_BOT=0
           BATCH_COUNT=0
 
-          # Cherry-pick behavior is normalized for merge commits.
           attempt_pick() {
             local commit="$1"
             shift
@@ -78,6 +76,7 @@ jobs:
               if [ -f .git/CHERRY_PICK_HEAD ] && git diff --quiet; then
                 git cherry-pick --skip
               else
+                git cherry-pick --abort
                 exit 1
               fi
             fi
@@ -103,43 +102,56 @@ jobs:
             fi
           }
 
+          get_domain_count() {
+            if [ -f hosts ]; then
+              grep -v '^#' hosts | grep -v '^[[:space:]]*$' | wc -l | tr -d ' '
+            else
+              echo "unknown"
+            fi
+          }
+
+          commit_squash_batch() {
+            local domain_count
+            if git diff --cached --quiet; then
+              STAGED_BOT=0
+              BATCH_COUNT=0
+              return
+            fi
+            domain_count=$(get_domain_count)
+            git commit -m "Archive: Blocklist updates for ${PREVIOUS_YEAR}" \
+                       -m "Squashed ${BATCH_COUNT} ${BOT_AUTHOR_LABEL} commits from ${PREVIOUS_YEAR}." \
+                       -m "Final state: ${domain_count} domains blocked." \
+                       -m "This automated cleanup runs annually to keep repository history manageable."
+            STAGED_BOT=0
+            BATCH_COUNT=0
+          }
+
           for COMMIT in $PREV_COMMITS; do
-            if git log -1 --format=%B "$COMMIT" | grep -q "\[automated\]"; then
+            AUTHOR_INFO=$(git show -s --format='%an <%ae>' "$COMMIT")
+            if printf '%s' "$AUTHOR_INFO" | grep -Eq "$BOT_AUTHOR_REGEX"; then
               pick_commit "$COMMIT" "no-commit"
-              STAGED_AUTOMATED=1
+              STAGED_BOT=1
               BATCH_COUNT=$((BATCH_COUNT + 1))
             else
-              if [ "$STAGED_AUTOMATED" -eq 1 ]; then
-                DOMAIN_COUNT=$(grep -v '^#' hosts | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
-                git commit -m "Archive: Blocklist updates for ${PREVIOUS_YEAR}" \
-                           -m "Squashed ${BATCH_COUNT} automated commits from ${PREVIOUS_YEAR}." \
-                           -m "Final state: ${DOMAIN_COUNT} domains blocked." \
-                           -m "This automated cleanup runs annually to keep repository history manageable."
-                STAGED_AUTOMATED=0
-                BATCH_COUNT=0
+              if [ "$STAGED_BOT" -eq 1 ]; then
+                commit_squash_batch
               fi
               pick_commit "$COMMIT"
             fi
           done
 
-          if [ "$STAGED_AUTOMATED" -eq 1 ]; then
-            DOMAIN_COUNT=$(grep -v '^#' hosts | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
-            git commit -m "Archive: Blocklist updates for ${PREVIOUS_YEAR}" \
-                       -m "Squashed ${BATCH_COUNT} automated commits from ${PREVIOUS_YEAR}." \
-                       -m "Final state: ${DOMAIN_COUNT} domains blocked." \
-                       -m "This automated cleanup runs annually to keep repository history manageable."
+          if [ "$STAGED_BOT" -eq 1 ]; then
+            commit_squash_batch
           fi
 
-          # Commits after previous year are replayed
           POST_COMMITS=$(git rev-list --reverse "${LAST_COMMIT}..${ORIGINAL_HEAD}")
           for COMMIT in $POST_COMMITS; do
             pick_commit "$COMMIT"
           done
 
-          # Force push to main
           git push origin temp-squash:main --force
 
-          echo "✓ Successfully squashed ${TOTAL_AUTOMATED_COUNT} commits from ${PREVIOUS_YEAR}"
+          echo "✓ Successfully squashed ${TOTAL_BOT_COUNT} ${BOT_AUTHOR_LABEL} commits from ${PREVIOUS_YEAR}"
 
       - name: Cleanup
         if: always()
