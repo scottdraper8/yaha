@@ -14,7 +14,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import UTC, datetime
 import json
 from pathlib import Path
-import re
 import sys
 from typing import Any
 
@@ -28,7 +27,7 @@ from src.cache_manager import (
 from src.config import SourceConfig, load_sources, load_whitelist, save_sources
 from src.domain_processor import extract_domains_from_lines
 from src.fetcher import FetchError, fetch_url_with_hash
-from src.hosts_generator import format_count, generate_hosts_file_from_file
+from src.hosts_generator import generate_hosts_file_from_file
 from src.pipeline import ContributionStats, PipelineFiles, process_annotated_pipeline
 from src.state_manager import (
     check_stale_sources,
@@ -142,6 +141,8 @@ def collect_sources_from_cache(
 
     Format per line: domain<TAB>source_id<TAB>is_general
     where is_general is 1 for non-NSFW sources and 0 otherwise.
+
+    Sources not found in cache are skipped with a warning.
     """
     source_stats: dict[str, int] = {}
     name_to_id = {s.name: idx for idx, s in enumerate(sources)}
@@ -168,8 +169,8 @@ def collect_sources_from_cache(
                 source_stats[source.name] = count
                 print(f"  Found {count:,} domains")
 
-            except (FileNotFoundError, KeyError) as e:
-                print(f"  Error: {e}", file=sys.stderr)
+            except (FileNotFoundError, KeyError):
+                print("  Skipped (not in cache)", file=sys.stderr)
                 source_stats[source.name] = 0
 
     return source_stats, id_to_name
@@ -201,6 +202,7 @@ def update_readme(
             )
 
         return f"""<table align="center">
+<!-- markdownlint-disable MD013 -->
 <thead>
 <tr>
 <th>Source List</th>
@@ -211,7 +213,8 @@ def update_readme(
 <tbody>
 {chr(10).join(rows)}
 </tbody>
-</table>"""
+</table>
+<!-- markdownlint-enable MD013 -->"""
 
     readme_path = Path("README.md")
 
@@ -220,24 +223,6 @@ def update_readme(
         return
 
     content = readme_path.read_text(encoding="utf-8")
-
-    general_formatted = format_count(total_general)
-    nsfw_formatted = format_count(total_all)
-
-    replacements = [
-        (
-            r"(Use `hosts` for general protection \(~)[^)]+(\))",
-            rf"\g<1>{general_formatted} domains\g<2>",
-        ),
-        (
-            r"(Use `hosts_nsfw` for all the same domains in `hosts` "
-            r"\*\*\*plus\*\*\* adult content \(\*\*~)[^)]+(\*\*\))",
-            rf"\g<1>{nsfw_formatted} domains\g<2>",
-        ),
-    ]
-
-    for pattern, replacement in replacements:
-        content = re.sub(pattern, replacement, content)
 
     stats_start = content.find("<!-- STATS_START -->")
     stats_end = content.find("<!-- STATS_END -->")
@@ -398,20 +383,25 @@ def main() -> int:
                 print("Run 'yaha' without flags first to populate the cache.", file=sys.stderr)
                 return 1
 
-            # Validate cache has all sources
+            # Check which sources are cached and filter out missing ones
             source_names = [s.name for s in sources]
             is_valid, missing = validate_cache(source_names)
             if not is_valid:
-                print(f"Error: Cache missing entries for {len(missing)} sources:", file=sys.stderr)
+                print(
+                    f"Warning: Cache missing entries for {len(missing)} sources (will skip):",
+                    file=sys.stderr,
+                )
                 for name in missing[:5]:
                     print(f"  - {name}", file=sys.stderr)
                 if len(missing) > 5:
                     print(f"  ... and {len(missing) - 5} more", file=sys.stderr)
-                print("\nRun 'yaha' without flags to refresh the cache.", file=sys.stderr)
-                return 1
+
+                # Filter out missing sources
+                sources = [s for s in sources if s.name not in missing]
+                print(f"\nProceeding with {len(sources)} cached sources (skipped {len(missing)})")
 
             cache_stats = get_cache_stats()
-            print(f"  Cache contains {cache_stats['source_count']} sources")
+            print(f"  Cache contains {cache_stats['source_count']} total entries")
             print(f"  Cached at: {cache_stats['cached_at']}")
 
             # Skip stale source check in compile-only mode
