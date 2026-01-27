@@ -49,8 +49,5 @@ discovery/
 # Generated blocklist files (not committed, created in workflow)
 blocklists/
 
-# Public Suffix List (auto-downloaded, refreshed every 30 days)
-public_suffix_list.dat
-
 # Temporary pipeline files
 temp_*.txt

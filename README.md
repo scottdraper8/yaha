@@ -55,8 +55,7 @@ flowchart LR
 
     Start --> Init[Load State & Config]
     Init --> LoadWhitelist[Load Whitelist]
-    LoadWhitelist --> LoadPSL[Download/Load PSL]
-    LoadPSL --> CheckStale{Stale Sources?<br/>&gt;180 days}
+    LoadWhitelist --> CheckStale{Stale Sources?<br/>&gt;180 days}
 
     CheckStale -->|Yes| PurgeStale[Purge & Save Config]
     CheckStale -->|No| FetchPhase
@@ -85,7 +84,7 @@ flowchart LR
     subgraph Pipeline [" "]
         direction TB
         Parse[Parse Formats<br/>hosts/raw/adblock]
-        Parse --> Extract[Extract Registrable<br/>Domains via PSL]
+        Parse --> Extract[Extract Domains<br/>as Specified]
         Extract --> Annotate[Annotate Stream<br/>source_id + category]
         Annotate --> Sort[External Sort<br/>by domain + source]
         Sort --> Dedupe[Stream Dedup<br/>+ Whitelist Filter]
@@ -241,7 +240,7 @@ yaha/
 ├── src/                     # Source code (modular, zero-knowledge components)
 │   ├── cli.py               # Main orchestrator (business logic)
 │   ├── config.py            # Configuration loading and validation
-│   ├── domain_processor.py  # PSL-based domain extraction
+│   ├── domain_processor.py  # Domain extraction and validation
 │   ├── fetcher.py           # HTTP fetching with hash computation
 │   ├── hosts_generator.py   # Hosts file generation
 │   ├── pipeline.py          # Deduplication and contribution stats
@@ -349,7 +348,7 @@ Whitelisted domains are filtered during the deduplication pass.
 YAHA follows a modular, zero-knowledge architecture where each component is designed to be reusable and unaware of the specific business domain:
 
 - **`config.py`**: Loads and validates source configurations and whitelist
-- **`domain_processor.py`**: Extracts registrable domains using Public Suffix List rules (no knowledge of "blocklists")
+- **`domain_processor.py`**: Extracts and validates domains from various formats (no knowledge of "blocklists")
 - **`fetcher.py`**: Generic HTTP fetching with SHA256 hashing (no knowledge of domains)
 - **`pipeline.py`**: Generic deduplication and contribution tracking using external sort (no knowledge of "blocklists" or "NSFW")
 - **`hosts_generator.py`**: Generic hosts file I/O (no knowledge of sources or categories)

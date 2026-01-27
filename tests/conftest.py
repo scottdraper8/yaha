@@ -1,30 +1,6 @@
 """Pytest fixtures for YAHA test suite."""
 
-from pathlib import Path
-
 import pytest
-
-
-@pytest.fixture
-def sample_psl_content() -> str:
-    """Return minimal PSL content for testing."""
-    return """// Test Public Suffix List
-com
-net
-org
-co.uk
-github.io
-*.ck
-!www.ck
-"""
-
-
-@pytest.fixture
-def sample_psl(tmp_path: Path, sample_psl_content: str) -> Path:
-    """Create minimal PSL file for testing."""
-    psl_file = tmp_path / "test_psl.dat"
-    psl_file.write_text(sample_psl_content)
-    return psl_file
 
 
 @pytest.fixture
