@@ -2,14 +2,19 @@
 
 # YAHA - Yet Another Host Aggregator
 
-[![Update Blocklist](https://github.com/scottdraper8/yaha/actions/workflows/update-blocklist.yml/badge.svg)](https://github.com/scottdraper8/yaha/actions/workflows/update-blocklist.yml)
-[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/)
-[![Poetry](https://img.shields.io/badge/Poetry-1.8+-60A5FA?logo=poetry&logoColor=white)](https://python-poetry.org/)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-FAB040?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
+[![Update Blocklist](https://img.shields.io/github/actions/workflow/status/scottdraper8/yaha/update-blocklist.yml?label=Update%20Blocklist&logo=github&logoColor=white&color=50fa7b&labelColor=6272a4)](https://github.com/scottdraper8/yaha/actions/workflows/update-blocklist.yml)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-bd93f9?logo=python&logoColor=white&labelColor=6272a4)](https://www.python.org/downloads/)
+[![Poetry](https://img.shields.io/badge/Poetry-1.8+-ff79c6?logo=poetry&logoColor=white&labelColor=6272a4)](https://python-poetry.org/)
+[![pre-commit](https://img.shields.io/badge/pre--commit-4.4.0-f1fa8c?logo=pre-commit&logoColor=282a36&labelColor=6272a4)](https://github.com/pre-commit/pre-commit)
+[![curl-cffi](https://img.shields.io/badge/curl--cffi-0.14.0+-8be9fd?logo=curl&logoColor=white&labelColor=6272a4)](https://github.com/yifeikong/curl_cffi)
 
 ---
 
-A blocklist aggregator that compiles multiple sources into two hosts files: one for general protection (ads, trackers, malware) and one including NSFW content blocking. Primarily designed for applications like [TrackerControl](https://f-droid.org/packages/net.kollnig.missioncontrol.fdroid/) that only support one blocklist URL.
+Automated blocklist aggregator compiling millions of domains from
+multiple sources. Blocks ads, trackers, malware, and optionally NSFW
+content. Perfect for applications like
+[TrackerControl](https://f-droid.org/packages/net.kollnig.missioncontrol.fdroid/),
+Pi-hole, and other DNS/hosts-based blockers.
 
 ---
 
@@ -32,12 +37,15 @@ https://github.com/scottdraper8/yaha/releases/download/latest/hosts_nsfw
 > [!TIP]
 > Copy either URL into any application that supports hosts-based blocking:
 >
-> - Use `hosts` for general protection (~2.8M domains)
-> - Use `hosts_nsfw` for all the same domains in `hosts` ***plus*** adult content (**~3.6M domains**)
+> - Use `hosts` for general protection
+> - Use `hosts_nsfw` for all the same domains in `hosts` ***plus*** adult content
 
 ## How It Works
 
-The workflow runs every 12 hours via GitHub Actions. It fetches all blocklists concurrently, computes SHA256 hashes of the content, and compares them against the previous run. If no content has changed, compilation is skipped. A weekly forced compilation runs on Sunday at midnight UTC regardless of changes.
+Runs automatically twice daily via GitHub Actions. Sources are fetched
+in parallel and checked for changes. If content is unchanged,
+compilation is skipped to save resources. A weekly forced run ensures
+the lists stay fresh regardless of source changes.
 
 ```mermaid
 %%{init: {'theme': 'dark', 'themeVariables': {
@@ -51,78 +59,34 @@ The workflow runs every 12 hours via GitHub Actions. It fetches all blocklists c
     'textColor': '#f8f8f2'
 }}}%%
 flowchart LR
-    Start([GitHub Actions Trigger<br/>Every 12 Hours])
+    Start([Runs Twice Daily<br/>via GitHub Actions])
 
-    Start --> Init[Load State & Config]
-    Init --> LoadWhitelist[Load Whitelist]
-    LoadWhitelist --> CheckStale{Stale Sources?<br/>&gt;180 days}
+    Start --> Fetch[Concurrent Fetch<br/>20+ Sources]
+    Fetch --> HashCheck{Content<br/>Changed?}
 
-    CheckStale -->|Yes| PurgeStale[Purge & Save Config]
-    CheckStale -->|No| FetchPhase
-    PurgeStale --> FetchPhase[Concurrent Fetch]
+    HashCheck -->|No| Weekly{Weekly<br/>Force?}
+    Weekly -->|No| Skip[Skip Compilation]
+    Weekly -->|Yes| Compile
 
-    subgraph FetchPhase [" "]
-        direction LR
-        Fetch1[Source 1<br/>SHA256 Hash]
-        Fetch2[Source 2<br/>SHA256 Hash]
-        Fetch3[Source 3<br/>SHA256 Hash]
-        FetchN[Source N<br/>SHA256 Hash]
+    HashCheck -->|Yes| Compile[Process & Dedupe<br/>Multi-Format Support]
 
-        Fetch1 ~~~ Fetch2
-        Fetch2 ~~~ Fetch3
-        Fetch3 ~~~ FetchN
-    end
+    Compile --> Split{Category}
+    Split -->|General| GenHosts[(hosts<br/>General)]
+    Split -->|NSFW| NSFWHosts[(hosts_nsfw<br/>Complete)]
 
-    FetchPhase --> CompareHashes{Hash<br/>Changed?}
+    GenHosts --> Release[GitHub Release]
+    NSFWHosts --> Release
 
-    CompareHashes -->|No Changes| ForceCheck{Weekly<br/>Force?}
-    ForceCheck -->|No| Skip[Skip Compilation]
-    ForceCheck -->|Yes| Pipeline
-
-    CompareHashes -->|Changes| Pipeline[Processing Pipeline]
-
-    subgraph Pipeline [" "]
-        direction TB
-        Parse[Parse Formats<br/>hosts/raw/adblock]
-        Parse --> Extract[Extract Domains<br/>as Specified]
-        Extract --> Annotate[Annotate Stream<br/>source_id + category]
-        Annotate --> Sort[External Sort<br/>by domain + source]
-        Sort --> Dedupe[Stream Dedup<br/>+ Whitelist Filter]
-        Dedupe --> Stats[Calculate<br/>Contributions]
-    end
-
-    Pipeline --> GenHosts[(hosts<br/>General Only)]
-    Pipeline --> NSFWHosts[(hosts_nsfw<br/>Complete)]
-    Pipeline --> UpdateREADME[Update README]
-
-    UpdateREADME --> SaveState[Save State]
-    Skip --> SaveState
-
-    SaveState --> Release{Compiled?}
-    Release -->|Yes| CreateRelease[GitHub Release]
-    Release -->|No| End([End])
-    CreateRelease --> End
-
-    GenHosts -.-> Apps[Applications<br/>TrackerControl, Pi-hole, etc]
-    NSFWHosts -.-> Apps
+    Skip --> End([End])
+    Release --> End
 
     style Start fill:#44475a,stroke:#8be9fd,stroke-width:3px
-    style CompareHashes fill:#44475a,stroke:#ffb86c,stroke-width:3px
-    style ForceCheck fill:#44475a,stroke:#ffb86c,stroke-width:2px
-    style Skip fill:#44475a,stroke:#50fa7b,stroke-width:2px
-    style Pipeline fill:#44475a,stroke:#ff79c6,stroke-width:2px
-    style FetchPhase fill:#44475a,stroke:#bd93f9,stroke-width:2px
+    style HashCheck fill:#44475a,stroke:#ffb86c,stroke-width:3px
+    style Compile fill:#44475a,stroke:#ff79c6,stroke-width:2px
     style GenHosts fill:#44475a,stroke:#50fa7b,stroke-width:2px
     style NSFWHosts fill:#44475a,stroke:#ff79c6,stroke-width:2px
-    style End fill:#44475a,stroke:#8be9fd,stroke-width:2px
+    style Release fill:#44475a,stroke:#bd93f9,stroke-width:2px
 ```
-
-> [!NOTE]
-> **Supported Formats:**
->
-> - **Hosts file format**: `0.0.0.0 domain.com` or `127.0.0.1 domain.com`
-> - **Raw domain lists**: One domain per line
-> - **Adblock Plus filters**: `||domain.com^`
 
 <!-- STATS_START -->
 
@@ -137,6 +101,7 @@ flowchart LR
 ### General Protection Lists
 
 <table align="center">
+<!-- markdownlint-disable MD013 -->
 <thead>
 <tr>
 <th>Source List</th>
@@ -169,10 +134,12 @@ flowchart LR
 <tr><td><a href='https://big.oisd.nl'>OISD Big List</a></td><td>0</td><td>0</td></tr>
 </tbody>
 </table>
+<!-- markdownlint-enable MD013 -->
 
 ### NSFW Blocking Lists
 
 <table align="center">
+<!-- markdownlint-disable MD013 -->
 <thead>
 <tr>
 <th>Source List</th>
@@ -186,26 +153,30 @@ flowchart LR
 <tr><td><a href='https://nsfw.oisd.nl'>OISD NSFW</a></td><td>0</td><td>0</td></tr>
 </tbody>
 </table>
+<!-- markdownlint-enable MD013 -->
 
 </div>
 
 > [!NOTE]
-> **Unique Contribution** shows how many domains would disappear if that source were removed.
-> Sources with low unique counts (~50 or less) provide minimal value.
+> **Unique Contribution** shows how many domains would disappear if
+> that source were removed. Sources with low unique counts (~50 or
+> less) provide minimal value.
 
 <!-- STATS_END -->
 
 ---
 
 > [!IMPORTANT]
-> The section below is ***ONLY*** for developers who want to customize or contribute to YAHA.
+> The section below is ***ONLY*** for developers who want to
+> customize or contribute to YAHA.
 
 ## Local Development Setup
 
 **Prerequisites:**
 
 - Python 3.11 or higher
-- [Poetry](https://python-poetry.org/docs/#installation) for dependency management
+- [Poetry](https://python-poetry.org/docs/#installation) for dependency
+  management
 
 **Clone and setup:**
 
@@ -234,10 +205,15 @@ poetry run yaha --force
 poetry run yaha --compile-only
 ```
 
-The compiler fetches all configured sources, parses domains, applies whitelist filters, deduplicates, generates both hosts files, and updates README statistics.
+The compiler fetches all configured sources, parses domains, applies
+whitelist filters, deduplicates, generates both hosts files, and updates
+README statistics.
 
 > [!TIP]
-> Use `--compile-only` after code changes that affect domain processing. This recompiles from cached sources without fetching, useful when you need to regenerate lists with new logic but source content hasn't changed.
+> Use `--compile-only` after code changes that affect domain processing.
+> This recompiles from cached sources without fetching, useful when you
+> need to regenerate lists with new logic but source content hasn't
+> changed.
 
 ### Project Structure
 
@@ -318,13 +294,17 @@ Each entry requires:
 
 Optional fields:
 
-- `nsfw`: Set to `true` to mark as NSFW content (included only in `hosts_nsfw`)
-- `preserve`: Set to `true` to prevent auto-purge (see Change Detection below)
+- `nsfw`: Set to `true` to mark as NSFW content (included only in
+  `hosts_nsfw`)
+- `preserve`: Set to `true` to prevent auto-purge (see Change Detection
+  below)
 - `maintainer_name`: Maintainer's display name for acknowledgments section
 - `maintainer_url`: URL to maintainer's repository or website
 - `maintainer_description`: Description of what the maintainer provides
 
-Maintainer fields are grouped and deduplicated in the acknowledgments section. When a list is purged, its maintainer is automatically removed from acknowledgments if no other active lists reference them.
+Maintainer fields are grouped and deduplicated in the acknowledgments
+section. When a list is purged, its maintainer is automatically removed
+from acknowledgments if no other active lists reference them.
 
 #### Whitelist Configuration
 
@@ -346,24 +326,10 @@ example.com
 **Supported patterns:**
 
 - **Exact match**: `example.com` - matches only that domain
-- **Wildcard match**: `*.example.com` - matches the domain and all subdomains
+- **Wildcard match**: `*.example.com` - matches the domain and all
+  subdomains
 
 Whitelisted domains are filtered during the deduplication pass.
-
-### Architecture
-
-YAHA follows a modular, zero-knowledge architecture where each component is designed to be reusable and unaware of the specific business domain:
-
-- **`cache_manager.py`**: Manages cached source content for compile-only mode (no knowledge of sources)
-- **`config.py`**: Loads and validates source configurations and whitelist
-- **`domain_processor.py`**: Extracts and validates domains from various formats (no knowledge of "blocklists")
-- **`fetcher.py`**: Generic HTTP fetching with SHA256 hashing (no knowledge of domains)
-- **`pipeline.py`**: Generic deduplication and contribution tracking using external sort (no knowledge of "blocklists" or "NSFW")
-- **`hosts_generator.py`**: Generic hosts file I/O (no knowledge of sources or categories)
-- **`state_manager.py`**: Persists state and detects staleness (no knowledge of "NSFW" or specific business rules)
-- **`cli.py`**: Main orchestrator containing all business logic (knows about "blocklists", "NSFW", purging rules, etc.)
-
-This separation ensures components remain maintainable and testable in isolation.
 
 ### Performance Tuning
 
@@ -374,30 +340,12 @@ In `src/cli.py`, adjust these constants:
 
 In `src/state_manager.py`:
 
-- `STALE_THRESHOLD_DAYS = 180`: Days before inactive sources are auto-purged
+- `STALE_THRESHOLD_DAYS = 180`: Days before inactive sources are
+  auto-purged
 
 > [!WARNING]
-> If you add many sources or experience rate limiting, reduce `MAX_WORKERS` to control concurrency.
-
-### Change Detection
-
-Hash-based change detection determines whether compilation is necessary:
-
-- **Hash comparison**: Each source's content is hashed (SHA256). If no hashes change between runs, compilation is skipped
-- **State tracking**: `state.json` stores hash history, fetch counts, and change timestamps
-- **Auto-purge**: Sources that haven't updated in 180+ days are removed from `blocklists.json`
-- **Preserve flag**: Set `"preserve": true` to prevent auto-purge for specific sources
-- **Weekly forced compilation**: Runs every Sunday at midnight UTC regardless of hash changes
-
-### Testing
-
-The test suite includes:
-
-- **Unit tests**: Individual module functionality (config, domain processing, fetching, pipeline, state management)
-- **Integration tests**: End-to-end pipeline with real HTTP requests
-- **78 total tests** with comprehensive coverage
-
-Tests are designed to avoid testing third-party library functionality (e.g., `curl_cffi`, `hashlib`) and focus on YAHA-specific logic.
+> If you add many sources or experience rate limiting, reduce
+> `MAX_WORKERS` to control concurrency.
 
 ## Acknowledgments
 
@@ -406,14 +354,19 @@ Tests are designed to avoid testing third-party library functionality (e.g., `cu
 Thanks to the maintainers of all source blocklists:
 
 - [Anudeep ND](https://github.com/anudeepND/blacklist) - Adservers blacklist
-- [AssoEchap](https://github.com/AssoEchap/stalkerware-indicators) - Stalkerware indicators
+- [AssoEchap](https://github.com/AssoEchap/stalkerware-indicators) -
+  Stalkerware indicators
 - [Cyber Threat Coalition](https://cyberthreatcoalition.org/) - Malware blocklist
 - [DandelionSprout](https://github.com/DandelionSprout/adfilt) - Anti-Malware List
-- [Firebog](https://firebog.net/) - RPiList Phishing/Malware, Prigent collections, AdGuard DNS, EasyPrivacy
+- [Firebog](https://firebog.net/) - RPiList Phishing/Malware, Prigent
+  collections, AdGuard DNS, EasyPrivacy
 - [Frogeye](https://hostfiles.frogeye.fr/) - First-party trackers
-- [HaGeZi](https://github.com/hagezi/dns-blocklists) - Multi-pro, Threat Intelligence, DGA, and NSFW lists
-- [Malware Filter](https://gitlab.com/malware-filter/phishing-filter) - Phishing filter
-- [Matomo](https://github.com/matomo-org/referrer-spam-blacklist) - Referrer spam blacklist
+- [HaGeZi](https://github.com/hagezi/dns-blocklists) - Multi-pro, Threat
+  Intelligence, DGA, and NSFW lists
+- [Malware Filter](https://gitlab.com/malware-filter/phishing-filter) -
+  Phishing filter
+- [Matomo](https://github.com/matomo-org/referrer-spam-blacklist) -
+  Referrer spam blacklist
 - [OISD](https://oisd.nl/) - Big List & NSFW blocklists
 - [Polish Filters Team](https://github.com/PolishFiltersTeam/KADhosts) - KADhosts
 - [RooneyMcNibNug](https://github.com/RooneyMcNibNug/pihole-stuff) - SNAFU
