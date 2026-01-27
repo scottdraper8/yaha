@@ -49,5 +49,8 @@ discovery/
 # Generated blocklist files (not committed, created in workflow)
 blocklists/
 
+# Cached source content (not committed, created during fetch)
+cache/
+
 # Temporary pipeline files
 temp_*.txt

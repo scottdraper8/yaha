@@ -20,7 +20,7 @@ class FetchError(Exception):
     pass
 
 
-def fetch_url_with_hash(url: str, timeout: int = REQUEST_TIMEOUT) -> tuple[str, Iterator[str]]:
+def fetch_url_with_hash(url: str, timeout: int = REQUEST_TIMEOUT) -> tuple[str, str, Iterator[str]]:
     """
     Fetch URL content and compute SHA256 hash.
 
@@ -31,7 +31,7 @@ def fetch_url_with_hash(url: str, timeout: int = REQUEST_TIMEOUT) -> tuple[str, 
         timeout: Request timeout in seconds
 
     Returns:
-        Tuple of (content_hash, line_iterator)
+        Tuple of (content_hash, raw_content, line_iterator)
 
     Raises:
         FetchError: If request fails
@@ -52,7 +52,7 @@ def fetch_url_with_hash(url: str, timeout: int = REQUEST_TIMEOUT) -> tuple[str, 
             for line in response_text.split("\n"):
                 yield line.rstrip("\r")
 
-        return content_hash, line_generator()
+        return content_hash, response_text, line_generator()
 
     except Exception as e:
         raise FetchError(f"Failed to fetch {url}: {e}") from e

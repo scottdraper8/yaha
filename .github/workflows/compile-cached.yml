@@ -1,0 +1,162 @@
+name: Compile from Cache
+
+on:
+  workflow_dispatch:  # Manual trigger only
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+
+      - name: Install project
+        run: poetry install --no-interaction
+
+      - name: Restore source cache
+        id: restore-source-cache
+        uses: actions/cache@v4
+        with:
+          path: cache
+          key: source-cache-${{ hashFiles('blocklists.json') }}
+          restore-keys: |
+            source-cache-
+
+      - name: Check for cache
+        run: |
+          if [ ! -d cache ] || [ ! -f cache/manifest.json ]; then
+            echo "Error: No source cache found."
+            echo "The normal 'Update Blocklist' workflow must run first to populate the cache."
+            echo ""
+            echo "To fix this:"
+            echo "1. Trigger the 'Update Blocklist' workflow manually, or"
+            echo "2. Wait for the next scheduled run (every 12 hours)"
+            exit 1
+          fi
+          SOURCE_COUNT=$(ls -1 cache/*.txt 2>/dev/null | wc -l)
+          echo "Cache found with ${SOURCE_COUNT} source files"
+          echo "Cached at: $(jq -r '.cached_at' cache/manifest.json)"
+
+      - name: Compile from cache
+        run: poetry run yaha --compile-only
+
+      - name: Update or create latest release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Count domains
+          GENERAL_COUNT=$(grep -v '^#' blocklists/hosts | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+          NSFW_COUNT=$(grep -v '^#' blocklists/hosts_nsfw | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+          TIMESTAMP=$(date -u +'%Y-%m-%d %H:%M:%S UTC')
+
+          # Create release notes
+          cat > release_notes.md << EOF
+          # YAHA Blocklist - Latest
+
+          **Compiled from cache (code changes applied)**
+
+          ## Statistics
+
+          - **General Protection:** ${GENERAL_COUNT} domains
+          - **Complete (with NSFW):** ${NSFW_COUNT} domains
+          - **Last Updated:** ${TIMESTAMP}
+
+          ## Usage
+
+          ### General Protection (Ads, Trackers, Malware)
+          \`\`\`
+          https://github.com/scottdraper8/yaha/releases/download/latest/hosts
+          \`\`\`
+
+          ### Complete Protection (Including NSFW)
+          \`\`\`
+          https://github.com/scottdraper8/yaha/releases/download/latest/hosts_nsfw
+          \`\`\`
+
+          Copy either URL into any application that supports hosts-based blocking (TrackerControl, Pi-hole, AdGuard, etc).
+
+          ## Source Lists
+
+          - 24 General protection lists
+          - 3 NSFW blocking lists
+
+          See [README](https://github.com/scottdraper8/yaha#readme) for detailed statistics and source list breakdown.
+          EOF
+
+          # Delete existing 'latest' release and tag if it exists
+          gh release delete latest --yes 2>/dev/null || true
+          git push --delete origin latest 2>/dev/null || true
+
+          # Create new 'latest' release with updated files
+          gh release create latest \
+            --title "YAHA Blocklist - Latest" \
+            --notes-file release_notes.md \
+            blocklists/hosts \
+            blocklists/hosts_nsfw
+
+          echo "Release 'latest' updated with ${GENERAL_COUNT} general / ${NSFW_COUNT} complete domains"
+
+      - name: Commit README and state to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Commit state.json and README
+          git add state.json README.md
+
+          GENERAL_COUNT=$(grep -v '^#' blocklists/hosts | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+          NSFW_COUNT=$(grep -v '^#' blocklists/hosts_nsfw | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+
+          git commit -m "Recompile from cache: ${GENERAL_COUNT} general / ${NSFW_COUNT} with NSFW [automated]" \
+                     -m "Compiled using cached sources without network fetch." || echo "No changes to commit"
+
+          git push || echo "Nothing to push"
+
+      - name: Generate workflow summary
+        if: always()
+        run: |
+          echo "## YAHA Compile from Cache Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f blocklists/hosts ]; then
+            GENERAL_COUNT=$(grep -v '^#' blocklists/hosts | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+            NSFW_COUNT=$(grep -v '^#' blocklists/hosts_nsfw | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+
+            echo "### Compilation Successful" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| General domains | $GENERAL_COUNT |" >> $GITHUB_STEP_SUMMARY
+            echo "| Total domains (with NSFW) | $NSFW_COUNT |" >> $GITHUB_STEP_SUMMARY
+            echo "| Source | Cached (no network) |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### Compilation Failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Check the logs for errors." >> $GITHUB_STEP_SUMMARY
+          fi

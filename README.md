@@ -229,15 +229,22 @@ poetry run yaha
 
 # Force recompilation (ignores hash checks)
 poetry run yaha --force
+
+# Compile from cached sources (no network requests)
+poetry run yaha --compile-only
 ```
 
 The compiler fetches all configured sources, parses domains, applies whitelist filters, deduplicates, generates both hosts files, and updates README statistics.
+
+> [!TIP]
+> Use `--compile-only` after code changes that affect domain processing. This recompiles from cached sources without fetching, useful when you need to regenerate lists with new logic but source content hasn't changed.
 
 ### Project Structure
 
 ```text
 yaha/
 ├── src/                     # Source code (modular, zero-knowledge components)
+│   ├── cache_manager.py     # Source content caching for compile-only mode
 │   ├── cli.py               # Main orchestrator (business logic)
 │   ├── config.py            # Configuration loading and validation
 │   ├── domain_processor.py  # Domain extraction and validation
@@ -245,7 +252,7 @@ yaha/
 │   ├── hosts_generator.py   # Hosts file generation
 │   ├── pipeline.py          # Deduplication and contribution stats
 │   └── state_manager.py     # State persistence and staleness checks
-├── tests/                   # Comprehensive test suite (78 tests)
+├── tests/                   # Comprehensive test suite (83 tests)
 ├── blocklists.json          # Source configuration
 ├── whitelist.txt            # Domain whitelist
 ├── state.json               # Runtime state (hashes, timestamps)
@@ -347,6 +354,7 @@ Whitelisted domains are filtered during the deduplication pass.
 
 YAHA follows a modular, zero-knowledge architecture where each component is designed to be reusable and unaware of the specific business domain:
 
+- **`cache_manager.py`**: Manages cached source content for compile-only mode (no knowledge of sources)
 - **`config.py`**: Loads and validates source configurations and whitelist
 - **`domain_processor.py`**: Extracts and validates domains from various formats (no knowledge of "blocklists")
 - **`fetcher.py`**: Generic HTTP fetching with SHA256 hashing (no knowledge of domains)
