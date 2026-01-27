@@ -22,7 +22,7 @@ class TestEndToEndPipeline:
         """Test fetching and parsing a real blocklist."""
         url = "https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn/hosts"
 
-        content_hash, lines = fetch_url_with_hash(url, timeout=60)
+        content_hash, _raw_content, lines = fetch_url_with_hash(url, timeout=60)
 
         assert len(content_hash) == 64
 

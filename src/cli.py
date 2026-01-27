@@ -18,6 +18,13 @@ import re
 import sys
 from typing import Any
 
+from src.cache_manager import (
+    cache_exists,
+    get_cache_stats,
+    load_from_cache,
+    save_to_cache,
+    validate_cache,
+)
 from src.config import SourceConfig, load_sources, load_whitelist, save_sources
 from src.domain_processor import extract_domains_from_lines
 from src.fetcher import FetchError, fetch_url_with_hash
@@ -68,7 +75,7 @@ def collect_sources_with_hashes(
     state: Any,
 ) -> tuple[dict[str, int], dict[int, str], dict[str, str], bool]:
     """
-    Fetch all sources, compute hashes, and check for changes.
+    Fetch all sources, compute hashes, check for changes, and save to cache.
 
     Format per line: domain<TAB>source_id<TAB>is_general
     where is_general is 1 for non-NSFW sources and 0 otherwise.
@@ -96,8 +103,11 @@ def collect_sources_with_hashes(
             print(f"Fetching {source.name}{nsfw_tag}...")
 
             try:
-                content_hash, lines = future.result()
+                content_hash, raw_content, lines = future.result()
                 new_hashes[source.name] = content_hash
+
+                # Save fetched content to cache for compile-only mode
+                save_to_cache(source.name, source_id, raw_content, source.url, content_hash)
 
                 # Check if hash changed and update state
                 changed = update_source_state(state, source, content_hash, current_time)
@@ -121,6 +131,48 @@ def collect_sources_with_hashes(
                 source_stats[source.name] = 0
 
     return source_stats, id_to_name, new_hashes, any_changed
+
+
+def collect_sources_from_cache(
+    sources: list[SourceConfig],
+    output_file: Path,
+) -> tuple[dict[str, int], dict[int, str]]:
+    """
+    Load sources from cache and process domains.
+
+    Format per line: domain<TAB>source_id<TAB>is_general
+    where is_general is 1 for non-NSFW sources and 0 otherwise.
+    """
+    source_stats: dict[str, int] = {}
+    name_to_id = {s.name: idx for idx, s in enumerate(sources)}
+    id_to_name = {idx: s.name for idx, s in enumerate(sources)}
+
+    with output_file.open("w", encoding="utf-8") as f_out:
+        for source in sources:
+            is_nsfw = source.nsfw
+            is_general_flag = 0 if is_nsfw else 1
+            source_id = name_to_id[source.name]
+            nsfw_tag = "  [NSFW]" if is_nsfw else ""
+
+            print(f"Loading from cache: {source.name}{nsfw_tag}...")
+
+            try:
+                lines = load_from_cache(source.name)
+
+                # Write domains to annotated stream
+                count = 0
+                for domain in extract_domains_from_lines(lines):
+                    f_out.write(f"{domain}\t{source_id}\t{is_general_flag}\n")
+                    count += 1
+
+                source_stats[source.name] = count
+                print(f"  Found {count:,} domains")
+
+            except (FileNotFoundError, KeyError) as e:
+                print(f"  Error: {e}", file=sys.stderr)
+                source_stats[source.name] = 0
+
+    return source_stats, id_to_name
 
 
 def update_readme(
@@ -306,7 +358,17 @@ def main() -> int:
         action="store_true",
         help="Force recompilation even if no changes detected",
     )
+    parser.add_argument(
+        "--compile-only",
+        action="store_true",
+        help="Compile from cached sources without fetching (requires previous run)",
+    )
     args = parser.parse_args()
+
+    # Validate mutually exclusive options
+    if args.compile_only and args.force:
+        print("Error: --compile-only and --force cannot be used together", file=sys.stderr)
+        return 1
 
     print("YAHA - Yet Another Host Aggregator")
     print("=" * 50)
@@ -321,58 +383,94 @@ def main() -> int:
         print(f"  Total compilations: {state.compilation_count}")
         print(f"  Skipped compilations: {state.skipped_compilations}")
 
-        # Step 2: Load and check for stale sources
+        # Step 2: Load source configuration
         print("\nLoading source configuration...")
         sources = load_sources()
         print(f"Loaded {len(sources)} source(s)")
 
-        print("\nChecking for stale sources...")
-        sources, purge_occurred = check_stale_sources(state, sources, current_time)
+        # Step 3: Handle compile-only mode
+        if args.compile_only:
+            print("\nCompile-only mode: using cached sources...")
 
-        if purge_occurred:
-            print("  Saving updated blocklists.json...")
-            save_sources(sources)
-            print(f"  Active sources after purge: {len(sources)}")
+            # Validate cache exists
+            if not cache_exists():
+                print("Error: Cache not found. Cannot use --compile-only.", file=sys.stderr)
+                print("Run 'yaha' without flags first to populate the cache.", file=sys.stderr)
+                return 1
+
+            # Validate cache has all sources
+            source_names = [s.name for s in sources]
+            is_valid, missing = validate_cache(source_names)
+            if not is_valid:
+                print(f"Error: Cache missing entries for {len(missing)} sources:", file=sys.stderr)
+                for name in missing[:5]:
+                    print(f"  - {name}", file=sys.stderr)
+                if len(missing) > 5:
+                    print(f"  ... and {len(missing) - 5} more", file=sys.stderr)
+                print("\nRun 'yaha' without flags to refresh the cache.", file=sys.stderr)
+                return 1
+
+            cache_stats = get_cache_stats()
+            print(f"  Cache contains {cache_stats['source_count']} sources")
+            print(f"  Cached at: {cache_stats['cached_at']}")
+
+            # Skip stale source check in compile-only mode
+            purge_occurred = False
         else:
-            print("  No stale sources found")
+            # Normal mode: check for stale sources
+            print("\nChecking for stale sources...")
+            sources, purge_occurred = check_stale_sources(state, sources, current_time)
 
-        # Step 3: Load whitelist
+            if purge_occurred:
+                print("  Saving updated blocklists.json...")
+                save_sources(sources)
+                print(f"  Active sources after purge: {len(sources)}")
+            else:
+                print("  No stale sources found")
+
+        # Step 4: Load whitelist
         print("\nLoading whitelist...")
         whitelist = load_whitelist()
         total_wl = len(whitelist.exact) + len(whitelist.wildcards)
         if total_wl > 0:
             print(f"  Loaded {len(whitelist.exact)} exact, {len(whitelist.wildcards)} wildcard(s)")
 
-        # Step 4: Fetch + hash all sources concurrently
+        # Step 5: Load sources (from cache or network)
         blocklists_dir = Path("blocklists")
         blocklists_dir.mkdir(exist_ok=True)
 
         pipeline = PipelineFiles.create()
 
-        print("\nFetching sources and computing hashes...")
-        source_stats, id_to_name, _new_hashes, any_changed = collect_sources_with_hashes(
-            sources, pipeline.annotated, state
-        )
-
-        # Step 5: Decide whether to compile
-        force_compile = args.force or should_force_compile(state, current_time)
-
-        if not any_changed and not force_compile and not purge_occurred:
-            print("\nNo changes detected - skipping compilation")
-            print(f"Last compilation was at {state.last_compilation}")
-            state.skipped_compilations += 1
-            pipeline.cleanup()
-            save_state(state)
-            return 0
-
-        if args.force:
-            print("\nWARNING: Forcing compilation (--force flag)")
-        elif force_compile:
-            print("\nWARNING: Forcing compilation (weekly schedule)")
-        elif purge_occurred:
-            print("\nWARNING: Compiling due to purged sources")
+        if args.compile_only:
+            print("\nLoading sources from cache...")
+            source_stats, id_to_name = collect_sources_from_cache(sources, pipeline.annotated)
+            # Always compile in compile-only mode
+            print("\nCompile-only mode: proceeding with compilation...")
         else:
-            print("\nChanges detected - proceeding with compilation")
+            print("\nFetching sources and computing hashes...")
+            source_stats, id_to_name, _new_hashes, any_changed = collect_sources_with_hashes(
+                sources, pipeline.annotated, state
+            )
+
+            # Decide whether to compile
+            force_compile = args.force or should_force_compile(state, current_time)
+
+            if not any_changed and not force_compile and not purge_occurred:
+                print("\nNo changes detected - skipping compilation")
+                print(f"Last compilation was at {state.last_compilation}")
+                state.skipped_compilations += 1
+                pipeline.cleanup()
+                save_state(state)
+                return 0
+
+            if args.force:
+                print("\nWARNING: Forcing compilation (--force flag)")
+            elif force_compile:
+                print("\nWARNING: Forcing compilation (weekly schedule)")
+            elif purge_occurred:
+                print("\nWARNING: Compiling due to purged sources")
+            else:
+                print("\nChanges detected - proceeding with compilation")
 
         # Step 6: Run full compilation pipeline
         hosts_path = blocklists_dir / "hosts"
