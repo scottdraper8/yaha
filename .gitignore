@@ -5,17 +5,15 @@ __pycache__/
 *.so
 .Python
 
-# Virtual Environment
+# Poetry
 .venv/
-venv/
-ENV/
-env/
 
 # Environment variables
 .env
 .env.local
 
 # IDEs
+.cursor/
 .vscode/
 .idea/
 *.swp
@@ -39,6 +37,7 @@ build/
 Thumbs.db
 
 # Logs
+logs/
 *.log
 
 # Ruff cache
@@ -52,3 +51,6 @@ blocklists/
 
 # Public Suffix List (auto-downloaded, refreshed every 30 days)
 public_suffix_list.dat
+
+# Temporary pipeline files
+temp_*.txt

@@ -1,0 +1,119 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = [ "poetry-core>=2" ]
+
+[project]
+name = "yaha"
+version = "2.0.0"
+description = "Yet Another Host Aggregator - Compile blocklists with hash-based change detection"
+readme = "README.md"
+keywords = [ "adblock", "blocklist", "dns", "hosts", "privacy" ]
+
+license = "MIT"
+authors = [
+  { name = "Scott Draper" },
+]
+requires-python = ">=3.11"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+urls.Homepage = "https://github.com/scottdraper8/yaha"
+urls.Issues = "https://github.com/scottdraper8/yaha/issues"
+urls.Repository = "https://github.com/scottdraper8/yaha"
+scripts.yaha = "src.cli:main"
+
+[tool.poetry]
+package-mode = true
+packages = [ { include = "src" } ]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+curl-cffi = "^0.14.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^9.0.2"
+pytest-cov = "^7.0.0"
+mypy = "^1.19.1"
+ruff = "^0.14.14"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+show-fixes = true
+
+format.indent-style = "space"
+format.quote-style = "double"
+format.line-ending = "auto"
+format.skip-magic-trailing-comma = false
+lint.select = [
+  "ARG", # flake8-unused-arguments
+  "B",   # flake8-bugbear
+  "C4",  # flake8-comprehensions
+  "E",   # pycodestyle errors
+  "ERA", # eradicate
+  "F",   # pyflakes
+  "I",   # isort
+  "N",   # pep8-naming
+  "PL",  # pylint
+  "PTH", # flake8-use-pathlib
+  "RUF", # ruff-specific rules
+  "SIM", # flake8-simplify
+  "UP",  # pyupgrade
+  "W",   # pycodestyle warnings
+]
+lint.ignore = [
+  "E501",    # line too long (handled by formatter)
+  "PLR0912", # too many branches
+  "PLR0913", # too many arguments
+  "PLR0915", # too many statements
+  "PLR2004", # magic value used in comparison
+  "TC001",   # type-checking import (overly pedantic for this project)
+  "TC003",   # type-checking import (overly pedantic for this project)
+]
+lint.isort.force-sort-within-sections = true
+lint.isort.known-first-party = [ "src" ]
+
+[tool.pytest.ini_options]
+testpaths = [ "tests" ]
+python_files = [ "test_*.py" ]
+python_classes = [ "Test*" ]
+python_functions = [ "test_*" ]
+addopts = [
+  "-v",
+  "--strict-markers",
+  "--tb=short",
+  "--cov=src",
+  "--cov-report=term-missing:skip-covered",
+  "--cov-report=html",
+]
+
+[tool.coverage.run]
+source = [ "src" ]
+omit = [ "tests/*" ]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+show_error_codes = true
+pretty = true
+no_implicit_optional = true
+strict_equality = true
+check_untyped_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+files = [ "src/**/*.py" ]
