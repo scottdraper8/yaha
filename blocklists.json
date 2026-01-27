@@ -2,126 +2,201 @@
   {
     "name": "Steven Black's Unified Hosts",
     "url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "Steven Black",
+    "maintainer_url": "https://github.com/StevenBlack/hosts",
+    "maintainer_description": "Unified hosts file"
   },
   {
     "name": "OISD Big List",
     "url": "https://big.oisd.nl",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "OISD",
+    "maintainer_url": "https://oisd.nl/",
+    "maintainer_description": "Big List & NSFW blocklists"
   },
   {
     "name": "HaGeZi Multi-pro Extended",
     "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "HaGeZi",
+    "maintainer_url": "https://github.com/hagezi/dns-blocklists",
+    "maintainer_description": "Multi-pro, Threat Intelligence, DGA, and NSFW lists"
   },
   {
     "name": "HaGeZi Threat Intelligence",
     "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "HaGeZi",
+    "maintainer_url": "https://github.com/hagezi/dns-blocklists",
+    "maintainer_description": "Multi-pro, Threat Intelligence, DGA, and NSFW lists"
   },
   {
     "name": "HaGeZi DGA 30 Days",
     "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/dga30.txt",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "HaGeZi",
+    "maintainer_url": "https://github.com/hagezi/dns-blocklists",
+    "maintainer_description": "Multi-pro, Threat Intelligence, DGA, and NSFW lists"
   },
   {
     "name": "OISD NSFW",
     "url": "https://nsfw.oisd.nl",
-    "nsfw": true
+    "nsfw": true,
+    "maintainer_name": "OISD",
+    "maintainer_url": "https://oisd.nl/",
+    "maintainer_description": "Big List & NSFW blocklists"
   },
   {
     "name": "HaGeZi NSFW",
     "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/nsfw.txt",
-    "nsfw": true
+    "nsfw": true,
+    "maintainer_name": "HaGeZi",
+    "maintainer_url": "https://github.com/hagezi/dns-blocklists",
+    "maintainer_description": "Multi-pro, Threat Intelligence, DGA, and NSFW lists"
   },
   {
     "name": "Prigent Adult",
     "url": "https://v.firebog.net/hosts/Prigent-Adult.txt",
-    "nsfw": true
+    "nsfw": true,
+    "maintainer_name": "Firebog",
+    "maintainer_url": "https://firebog.net/",
+    "maintainer_description": "RPiList Phishing/Malware, Prigent collections, AdGuard DNS, EasyPrivacy"
   },
   {
     "name": "RPiList Phishing",
     "url": "https://v.firebog.net/hosts/RPiList-Phishing.txt",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "Firebog",
+    "maintainer_url": "https://firebog.net/",
+    "maintainer_description": "RPiList Phishing/Malware, Prigent collections, AdGuard DNS, EasyPrivacy"
   },
   {
     "name": "RPiList Malware",
     "url": "https://v.firebog.net/hosts/RPiList-Malware.txt",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "Firebog",
+    "maintainer_url": "https://firebog.net/",
+    "maintainer_description": "RPiList Phishing/Malware, Prigent collections, AdGuard DNS, EasyPrivacy"
   },
   {
     "name": "SNAFU",
     "url": "https://raw.githubusercontent.com/RooneyMcNibNug/pihole-stuff/master/SNAFU.txt",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "RooneyMcNibNug",
+    "maintainer_url": "https://github.com/RooneyMcNibNug/pihole-stuff",
+    "maintainer_description": "SNAFU"
   },
   {
     "name": "Anudeep's Blacklist",
     "url": "https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "Anudeep ND",
+    "maintainer_url": "https://github.com/anudeepND/blacklist",
+    "maintainer_description": "Adservers blacklist"
   },
   {
     "name": "First-Party Trackers",
     "url": "https://hostfiles.frogeye.fr/firstparty-trackers-hosts.txt",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "Frogeye",
+    "maintainer_url": "https://hostfiles.frogeye.fr/",
+    "maintainer_description": "First-party trackers"
   },
   {
     "name": "AdGuard DNS Filter",
     "url": "https://v.firebog.net/hosts/AdguardDNS.txt",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "Firebog",
+    "maintainer_url": "https://firebog.net/",
+    "maintainer_description": "RPiList Phishing/Malware, Prigent collections, AdGuard DNS, EasyPrivacy"
   },
   {
     "name": "EasyPrivacy",
     "url": "https://v.firebog.net/hosts/Easyprivacy.txt",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "Firebog",
+    "maintainer_url": "https://firebog.net/",
+    "maintainer_description": "RPiList Phishing/Malware, Prigent collections, AdGuard DNS, EasyPrivacy"
   },
   {
     "name": "Cyber Threat Coalition Malware",
     "url": "https://lists.cyberhost.uk/malware.txt",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "Cyber Threat Coalition",
+    "maintainer_url": "https://cyberthreatcoalition.org/",
+    "maintainer_description": "Malware blocklist"
   },
   {
     "name": "Prigent Crypto",
     "url": "https://v.firebog.net/hosts/Prigent-Crypto.txt",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "Firebog",
+    "maintainer_url": "https://firebog.net/",
+    "maintainer_description": "RPiList Phishing/Malware, Prigent collections, AdGuard DNS, EasyPrivacy"
   },
   {
     "name": "Spam404",
     "url": "https://raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "Spam404",
+    "maintainer_url": "https://github.com/Spam404/lists",
+    "maintainer_description": "Main blacklist"
   },
   {
     "name": "KADhosts",
     "url": "https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts.txt",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "Polish Filters Team",
+    "maintainer_url": "https://github.com/PolishFiltersTeam/KADhosts",
+    "maintainer_description": "KADhosts"
   },
   {
     "name": "hostsVN",
     "url": "https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "bigdargon",
+    "maintainer_url": "https://github.com/bigdargon/hostsVN",
+    "maintainer_description": "hostsVN"
   },
   {
     "name": "DandelionSprout Anti-Malware",
     "url": "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareHosts.txt",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "DandelionSprout",
+    "maintainer_url": "https://github.com/DandelionSprout/adfilt",
+    "maintainer_description": "Anti-Malware List"
   },
   {
     "name": "Matomo Referrer Spam",
     "url": "https://raw.githubusercontent.com/matomo-org/referrer-spam-blacklist/master/spammers.txt",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "Matomo",
+    "maintainer_url": "https://github.com/matomo-org/referrer-spam-blacklist",
+    "maintainer_description": "Referrer spam blacklist"
   },
   {
     "name": "Prigent Ads",
     "url": "https://v.firebog.net/hosts/Prigent-Ads.txt",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "Firebog",
+    "maintainer_url": "https://firebog.net/",
+    "maintainer_description": "RPiList Phishing/Malware, Prigent collections, AdGuard DNS, EasyPrivacy"
   },
   {
     "name": "Stalkerware Indicators",
     "url": "https://raw.githubusercontent.com/AssoEchap/stalkerware-indicators/master/generated/hosts",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "AssoEchap",
+    "maintainer_url": "https://github.com/AssoEchap/stalkerware-indicators",
+    "maintainer_description": "Stalkerware indicators"
   },
   {
     "name": "Phishing Hosts",
     "url": "https://malware-filter.gitlab.io/malware-filter/phishing-filter-hosts.txt",
-    "nsfw": false
+    "nsfw": false,
+    "maintainer_name": "Malware Filter",
+    "maintainer_url": "https://gitlab.com/malware-filter/phishing-filter",
+    "maintainer_description": "Phishing filter"
   }
 ]

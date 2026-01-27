@@ -2,8 +2,8 @@ name: Update Blocklist
 
 on:
   schedule:
-    # Run every 6 hours
-    - cron: '0 */6 * * *'
+    # Run every 12 hours (midnight and noon UTC)
+    - cron: '0 */12 * * *'
   workflow_dispatch:
   push:
     branches:
@@ -37,7 +37,18 @@ jobs:
       - name: Run blocklist compiler
         run: python compile_blocklist.py
 
+      - name: Check if compilation was skipped
+        id: check_skip
+        run: |
+          if [ ! -f blocklists/hosts ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Compilation was skipped - no changes detected"
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Update or create latest release
+        if: steps.check_skip.outputs.skip == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -50,15 +61,15 @@ jobs:
           cat > release_notes.md << EOF
           # YAHA Blocklist - Latest
 
-          **Automatically updated every 6 hours**
+          **Updated every 12 hours**
 
-          ## 📊 Statistics
+          ## Statistics
 
           - **General Protection:** ${GENERAL_COUNT} domains
           - **Complete (with NSFW):** ${NSFW_COUNT} domains
           - **Last Updated:** ${TIMESTAMP}
 
-          ## 📥 Usage
+          ## Usage
 
           ### General Protection (Ads, Trackers, Malware)
           \`\`\`
@@ -72,7 +83,7 @@ jobs:
 
           Copy either URL into any application that supports hosts-based blocking (TrackerControl, Pi-hole, AdGuard, etc).
 
-          ## 📋 Source Lists
+          ## Source Lists
 
           - 24 General protection lists
           - 3 NSFW blocking lists
@@ -91,18 +102,79 @@ jobs:
             blocklists/hosts \
             blocklists/hosts_nsfw
 
-          echo "✓ Release 'latest' updated with ${GENERAL_COUNT} general / ${NSFW_COUNT} complete domains"
+          echo "Release 'latest' updated with ${GENERAL_COUNT} general / ${NSFW_COUNT} complete domains"
 
-      - name: Commit README to main
+      - name: Commit README and state to main
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Count domains for commit message
-          GENERAL_COUNT=$(grep -v '^#' blocklists/hosts | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
-          NSFW_COUNT=$(grep -v '^#' blocklists/hosts_nsfw | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+          # Always commit state.json (tracks skipped compilations too)
+          git add state.json
 
-          # Commit README and domain count tracker
-          git add README.md
-          git commit -m "Update blocklist stats: ${GENERAL_COUNT} general / ${NSFW_COUNT} with NSFW [automated]" || echo "No README changes to commit"
+          # Check if blocklists.json was modified (purge occurred)
+          if git diff --name-only | grep -q 'blocklists.json'; then
+            git add blocklists.json
+          fi
+
+          # Check if hosts files exist (compilation occurred)
+          if [ -f blocklists/hosts ]; then
+            GENERAL_COUNT=$(grep -v '^#' blocklists/hosts | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+            NSFW_COUNT=$(grep -v '^#' blocklists/hosts_nsfw | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+            git add README.md
+
+            # Check if this is a purge commit
+            if git diff --cached --name-only | grep -q 'blocklists.json'; then
+              git commit -m "Update blocklists and purge stale sources [automated]" \
+                         -m "Stats: ${GENERAL_COUNT} general / ${NSFW_COUNT} with NSFW" \
+                         -m "Removed inactive sources (no updates for 180+ days)" || echo "No changes to commit"
+            else
+              git commit -m "Update blocklist stats: ${GENERAL_COUNT} general / ${NSFW_COUNT} with NSFW [automated]" || echo "No changes to commit"
+            fi
+          else
+            # Compilation was skipped, just commit state
+            git commit -m "Update state: compilation skipped (no changes detected) [automated]" || echo "No state changes to commit"
+          fi
+
           git push || echo "Nothing to push"
+
+      - name: Generate workflow summary
+        if: always()
+        run: |
+          echo "## YAHA Compilation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f state.json ]; then
+            COMP_COUNT=$(jq -r '.compilation_count' state.json)
+            SKIP_COUNT=$(jq -r '.skipped_compilations' state.json)
+            LAST_COMP=$(jq -r '.last_compilation' state.json)
+            TOTAL_RUNS=$((COMP_COUNT + SKIP_COUNT))
+
+            if [ "$TOTAL_RUNS" -gt 0 ]; then
+              EFFICIENCY=$(awk "BEGIN {printf \"%.1f\", ($SKIP_COUNT / $TOTAL_RUNS) * 100}")
+            else
+              EFFICIENCY="0.0"
+            fi
+
+            echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Total Runs | $TOTAL_RUNS |" >> $GITHUB_STEP_SUMMARY
+            echo "| Compilations | $COMP_COUNT |" >> $GITHUB_STEP_SUMMARY
+            echo "| Skipped | $SKIP_COUNT |" >> $GITHUB_STEP_SUMMARY
+            echo "| Efficiency | ${EFFICIENCY}% skipped |" >> $GITHUB_STEP_SUMMARY
+            echo "| Last Compilation | $LAST_COMP |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No state file found (first run)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ -f blocklists/hosts ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### This Run: Compiled" >> $GITHUB_STEP_SUMMARY
+            GENERAL_COUNT=$(grep -v '^#' blocklists/hosts | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+            NSFW_COUNT=$(grep -v '^#' blocklists/hosts_nsfw | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')
+            echo "- General domains: $GENERAL_COUNT" >> $GITHUB_STEP_SUMMARY
+            echo "- Total domains (with NSFW): $NSFW_COUNT" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### This Run: Skipped (no changes)" >> $GITHUB_STEP_SUMMARY
+          fi

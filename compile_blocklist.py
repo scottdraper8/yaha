@@ -1,22 +1,215 @@
 #!/usr/bin/env python3
 """
 YAHA - Yet Another Host Aggregator
-Compiles multiple blocklists into a single unified hosts file.
+
+Compiles multiple blocklists into unified hosts files with hash-based
+change detection.
+
+Features:
+- SHA256 hash comparison for change detection
+- Auto-purge of stale lists (no updates for 180+ days)
+- Weekly forced compilation
+- Concurrent fetching
+- Dual output: general protection and complete (with NSFW)
 """
 
+import hashlib
 import json
 import re
-import sys
 import subprocess
+import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Iterator
 
 from curl_cffi import requests
 
 MAX_WORKERS = 5
 REQUEST_TIMEOUT = 30
+STATE_FILE = Path("state.json")
+STALE_THRESHOLD_DAYS = 180
+
+PSL_FILE = Path("public_suffix_list.dat")
+PSL_URL = "https://publicsuffix.org/list/public_suffix_list.dat"
+PSL_STALE_DAYS = 30
+
+
+@dataclass(frozen=True)
+class PublicSuffixList:
+    """
+    Parsed Public Suffix List data structure.
+
+    Supports exact suffixes, wildcard rules, and exception rules.
+    """
+
+    exact: frozenset[str]
+    wildcards: frozenset[str]
+    exceptions: frozenset[str]
+
+
+def download_psl(psl_path: Path) -> None:
+    """
+    Download the Public Suffix List from Mozilla.
+
+    Args:
+        psl_path: Path to save the downloaded file
+    """
+    response = requests.get(
+        PSL_URL,
+        timeout=REQUEST_TIMEOUT,
+        impersonate="chrome120",
+        verify=True,
+    )
+    response.raise_for_status()
+    psl_path.write_text(response.text, encoding="utf-8")
+
+
+def is_psl_stale(psl_path: Path) -> bool:
+    """
+    Check if the cached PSL file is stale (older than PSL_STALE_DAYS).
+
+    Args:
+        psl_path: Path to the PSL file
+
+    Returns:
+        True if file is missing or older than threshold
+    """
+    if not psl_path.exists():
+        return True
+
+    mtime = datetime.fromtimestamp(psl_path.stat().st_mtime, tz=timezone.utc)
+    age_days = (datetime.now(timezone.utc) - mtime).days
+    return age_days >= PSL_STALE_DAYS
+
+
+def load_public_suffix_list(psl_path: Path) -> PublicSuffixList:
+    """
+    Parse the Public Suffix List file into lookup structures.
+
+    Format:
+    - Lines starting with // are comments
+    - Blank lines are ignored
+    - *.suffix indicates wildcard (all subdomains are public suffixes)
+    - !exception indicates an exception to a wildcard rule
+    - Other lines are exact public suffixes
+
+    Args:
+        psl_path: Path to the PSL file
+
+    Returns:
+        PublicSuffixList with parsed rules
+    """
+    exact: set[str] = set()
+    wildcards: set[str] = set()
+    exceptions: set[str] = set()
+
+    with psl_path.open(encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+
+            # Skip comments and empty lines
+            if not line or line.startswith("//"):
+                continue
+
+            # Exception rule: !www.ck means www.ck is NOT a public suffix
+            if line.startswith("!"):
+                exceptions.add(line[1:].lower())
+            # Wildcard rule: *.ck means all *.ck are public suffixes
+            elif line.startswith("*."):
+                wildcards.add(line[2:].lower())
+            # Exact suffix rule
+            else:
+                exact.add(line.lower())
+
+    return PublicSuffixList(
+        exact=frozenset(exact),
+        wildcards=frozenset(wildcards),
+        exceptions=frozenset(exceptions),
+    )
+
+
+def ensure_psl_and_load() -> PublicSuffixList:
+    """
+    Ensure PSL file exists and is fresh, then load and parse it.
+
+    Downloads the PSL if missing or stale (>30 days old).
+
+    Returns:
+        Parsed PublicSuffixList data structure
+    """
+    if is_psl_stale(PSL_FILE):
+        print("  Downloading fresh Public Suffix List...")
+        download_psl(PSL_FILE)
+        print(f"  Saved to {PSL_FILE}")
+    else:
+        print(f"  Using cached {PSL_FILE}")
+
+    return load_public_suffix_list(PSL_FILE)
+
+
+def get_registrable_domain(domain: str, psl: PublicSuffixList) -> str:
+    """
+    Extract the registrable (base) domain respecting public suffixes.
+
+    The registrable domain is the public suffix plus one label.
+    For public suffixes like github.io, this preserves user.github.io
+    rather than incorrectly stripping to github.io.
+
+    Args:
+        domain: Full domain name (lowercase)
+        psl: Parsed Public Suffix List
+
+    Returns:
+        Registrable base domain
+
+    Examples:
+        www.example.com -> example.com
+        api.foo.github.io -> foo.github.io (github.io is public suffix)
+        www.example.co.uk -> example.co.uk (co.uk is public suffix)
+        sub.example.ck -> example.ck (*.ck wildcard rule)
+        www.ck -> www.ck (!www.ck exception)
+    """
+    labels = domain.split(".")
+    num_labels = len(labels)
+
+    # Single-label domains cannot be stripped further
+    if num_labels < 2:
+        return domain
+
+    # Check from longest possible suffix to shortest
+    for i in range(num_labels):
+        # Build candidate suffix from position i to end
+        candidate = ".".join(labels[i:])
+
+        # Check exception rules first (highest priority)
+        if candidate in psl.exceptions:
+            # This is an exception - the candidate itself is registrable
+            if i == 0:
+                return domain
+            return ".".join(labels[i - 1 :])
+
+        # Check exact match
+        if candidate in psl.exact:
+            # Found public suffix at position i
+            # Registrable domain = one label before suffix + suffix
+            if i == 0:
+                # Domain is exactly a public suffix (e.g., "com")
+                return domain
+            return ".".join(labels[i - 1 :])
+
+        # Check wildcard rules: if parent is a wildcard suffix
+        if len(labels) > i + 1:
+            parent = ".".join(labels[i + 1 :])
+            if parent in psl.wildcards:
+                # *.parent is a wildcard rule, so candidate is a public suffix
+                if i == 0:
+                    return domain
+                return ".".join(labels[i - 1 :])
+
+    # No public suffix found - treat TLD as suffix, return domain.tld
+    return ".".join(labels[-2:])
 
 
 @dataclass(frozen=True)
@@ -85,6 +278,179 @@ class Whitelist:
         return False
 
 
+@dataclass
+class ListState:
+    """State tracking for a single blocklist."""
+
+    url: str
+    content_hash: str
+    last_fetch_date: str
+    last_changed_date: str
+    fetch_count: int
+    change_count: int
+    consecutive_failures: int
+    nsfw: bool
+
+
+@dataclass
+class CompilationState:
+    """Overall compilation state."""
+
+    lists: dict[str, ListState]
+    last_compilation: str
+    compilation_count: int
+    skipped_compilations: int
+    purged_lists: list[dict]
+
+
+def load_state() -> CompilationState:
+    """Load state from disk, create new if missing."""
+    if not STATE_FILE.exists():
+        return CompilationState(
+            lists={},
+            last_compilation="",
+            compilation_count=0,
+            skipped_compilations=0,
+            purged_lists=[],
+        )
+
+    with STATE_FILE.open() as f:
+        data = json.load(f)
+
+    # Convert dict to dataclass instances
+    lists = {
+        name: ListState(**state_dict)
+        for name, state_dict in data.get("lists", {}).items()
+    }
+
+    return CompilationState(
+        lists=lists,
+        last_compilation=data.get("last_compilation", ""),
+        compilation_count=data.get("compilation_count", 0),
+        skipped_compilations=data.get("skipped_compilations", 0),
+        purged_lists=data.get("purged_lists", []),
+    )
+
+
+def save_state(state: CompilationState) -> None:
+    """Persist state to disk."""
+    data = {
+        "lists": {
+            name: {
+                "url": s.url,
+                "content_hash": s.content_hash,
+                "last_fetch_date": s.last_fetch_date,
+                "last_changed_date": s.last_changed_date,
+                "fetch_count": s.fetch_count,
+                "change_count": s.change_count,
+                "consecutive_failures": s.consecutive_failures,
+                "nsfw": s.nsfw,
+            }
+            for name, s in state.lists.items()
+        },
+        "last_compilation": state.last_compilation,
+        "compilation_count": state.compilation_count,
+        "skipped_compilations": state.skipped_compilations,
+        "purged_lists": state.purged_lists,
+    }
+
+    with STATE_FILE.open("w") as f:
+        json.dump(data, f, indent=2)
+
+
+def check_and_purge_stale_lists(
+    state: CompilationState,
+    blocklists_config: list[dict],
+    current_time: datetime,
+) -> tuple[list[dict], bool]:
+    """
+    Identify stale lists (no updates for 180 days) and remove them.
+
+    Args:
+        state: Current compilation state
+        blocklists_config: List of blocklist configurations
+        current_time: Current UTC datetime
+
+    Returns:
+        Tuple of (active_lists, purge_occurred)
+    """
+    active_lists = []
+    purged_any = False
+
+    for blocklist in blocklists_config:
+        name = blocklist["name"]
+
+        # Check for manual preservation flag
+        if blocklist.get("preserve", False):
+            active_lists.append(blocklist)
+            continue
+
+        state_entry = state.lists.get(name)
+
+        if state_entry and state_entry.last_changed_date:
+            last_changed_dt = datetime.fromisoformat(
+                state_entry.last_changed_date.replace("Z", "+00:00")
+            )
+            days_stale = (current_time - last_changed_dt).days
+
+            if days_stale > STALE_THRESHOLD_DAYS:
+                print(f"WARNING: Purging stale list: {name}")
+                print(
+                    f"         No updates for {days_stale} days "
+                    f"(threshold: {STALE_THRESHOLD_DAYS})"
+                )
+
+                state.purged_lists.append(
+                    {
+                        "name": name,
+                        "url": blocklist["url"],
+                        "last_changed": state_entry.last_changed_date,
+                        "purged_date": current_time.isoformat(),
+                        "reason": f"No updates for {days_stale} days",
+                    }
+                )
+
+                # Remove from state tracking
+                del state.lists[name]
+
+                purged_any = True
+                continue
+
+        active_lists.append(blocklist)
+
+    return active_lists, purged_any
+
+
+def should_force_compile(state: CompilationState, current_time: datetime) -> bool:
+    """
+    Check if compilation should be forced regardless of changes.
+
+    Runs weekly compilation on Sunday at midnight UTC to handle:
+    - Missed updates due to hash detection issues
+    - State corruption recovery
+    - System verification
+
+    Args:
+        state: Current compilation state
+        current_time: Current UTC datetime
+
+    Returns:
+        True if compilation should be forced
+    """
+    if not state.last_compilation:
+        return True  # First run
+
+    last_compile = datetime.fromisoformat(state.last_compilation.replace("Z", "+00:00"))
+
+    # Force if >7 days since last compilation
+    hours_since = (current_time - last_compile).total_seconds() / 3600
+
+    # Also check if on Sunday (weekday 6) during midnight hour UTC
+    is_sunday_midnight = current_time.weekday() == 6 and current_time.hour == 0
+
+    return hours_since >= 168 or is_sunday_midnight  # 168 hours = 7 days
+
+
 # Domain validation per RFC 1035: max 253 chars total, 63 per label
 _DOMAIN_REGEX = r"[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*"
 
@@ -95,12 +461,14 @@ RAW_DOMAIN_PATTERN = re.compile(rf"^({_DOMAIN_REGEX})$")
 ADBLOCK_PATTERN = re.compile(rf"^\|\|({_DOMAIN_REGEX})\^")
 
 
-def fetch_blocklist_stream(name: str, url: str, timeout: int = REQUEST_TIMEOUT):
+def fetch_and_hash_streaming(
+    name: str, url: str, timeout: int = REQUEST_TIMEOUT
+) -> tuple[str, str, Iterator[str], str]:
     """
-    Fetch blocklist content from URL and return line iterator.
+    Fetch blocklist content and compute SHA256 hash.
 
     curl_cffi doesn't support true streaming (iter_content raises NotImplementedError).
-    Fetch full response but yield lines one at a time to minimize memory overhead.
+    Fetch full response, compute hash, then yield lines one at a time.
 
     Args:
         name: Name of the blocklist
@@ -108,7 +476,7 @@ def fetch_blocklist_stream(name: str, url: str, timeout: int = REQUEST_TIMEOUT):
         timeout: Request timeout in seconds
 
     Returns:
-        Tuple of (name, url, line iterator)
+        Tuple of (name, url, line iterator, content_hash)
 
     Raises:
         Exception: If request fails
@@ -125,11 +493,14 @@ def fetch_blocklist_stream(name: str, url: str, timeout: int = REQUEST_TIMEOUT):
 
         response_text = response.text
 
+        # Compute SHA256 hash of raw content
+        content_hash = hashlib.sha256(response_text.encode("utf-8")).hexdigest()
+
         def line_generator():
             for line in response_text.split("\n"):
                 yield line.rstrip("\r")
 
-        return name, url, line_generator()
+        return name, url, line_generator(), content_hash
     except Exception as e:
         raise Exception(f"Failed to fetch {name}: {str(e)}") from e
 
@@ -159,17 +530,19 @@ def is_valid_domain(domain: str) -> bool:
     return True
 
 
-def parse_domains_stream(lines):
+def parse_domains_stream(lines, psl: PublicSuffixList):
     """
-    Extract domains from line iterator, yielding one at a time.
+    Extract domains from line iterator, strip to base domain, yield one at a time.
 
     Support hosts files, raw domain lists, and Adblock Plus filters.
+    Domains are stripped to their registrable base domain before yielding.
 
     Args:
         lines: Iterator of lines from blocklist
+        psl: Parsed Public Suffix List for base domain extraction
 
     Yields:
-        Individual domain names
+        Registrable base domain names
     """
     patterns = [ADBLOCK_PATTERN, HOSTS_PATTERN, RAW_DOMAIN_PATTERN]
     localhost_prefixes = [
@@ -196,7 +569,8 @@ def parse_domains_stream(lines):
             if match:
                 domain = match.group(1).lower()
                 if is_valid_domain(domain):
-                    yield domain
+                    base_domain = get_registrable_domain(domain, psl)
+                    yield base_domain
                 break
 
 
@@ -290,31 +664,38 @@ def filter_blocklists_by_nsfw(
     return [bl for bl in blocklists if bl.get("nsfw", False) == include_nsfw]
 
 
-def collect_blocklists_annotated(
+def collect_blocklists_with_hashes(
     blocklists: list[dict[str, str]],
     output_file: Path,
-) -> tuple[dict[str, int], dict[int, str]]:
+    state: CompilationState,
+    psl: PublicSuffixList,
+) -> tuple[dict[str, int], dict[int, str], dict[str, str], bool]:
     """
-    Fetch all blocklists and emit annotated stream to disk.
+    Fetch all blocklists, compute hashes, and check for changes.
 
     Format per line: domain<TAB>list_id<TAB>is_general
     where is_general is 1 for non-NSFW lists and 0 otherwise.
+    Domains are stripped to their registrable base domain before writing.
 
     Args:
         blocklists: List of blocklist configurations
         output_file: Path to write annotated stream
+        state: Current compilation state for hash comparison
+        psl: Parsed Public Suffix List for base domain extraction
 
     Returns:
-        Tuple of (domain count per list, list_id to name mapping)
+        Tuple of (list_stats, id_to_name, new_hashes, any_changed)
     """
     list_stats: dict[str, int] = {}
     name_to_id = {bl["name"]: idx for idx, bl in enumerate(blocklists)}
     id_to_name = {idx: bl["name"] for idx, bl in enumerate(blocklists)}
+    new_hashes: dict[str, str] = {}
+    any_changed = False
 
     with output_file.open("w") as f_out:
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             future_to_blocklist = {
-                executor.submit(fetch_blocklist_stream, bl["name"], bl["url"]): bl
+                executor.submit(fetch_and_hash_streaming, bl["name"], bl["url"]): bl
                 for bl in blocklists
             }
 
@@ -329,20 +710,39 @@ def collect_blocklists_annotated(
                 print(f"Fetching {name}{nsfw_tag}...")
 
                 try:
-                    _, _, lines = future.result()
+                    _, _, lines, content_hash = future.result()
+                    new_hashes[name] = content_hash
 
+                    # Check if hash changed
+                    old_state = state.lists.get(name)
+                    if old_state:
+                        if old_state.content_hash != content_hash:
+                            print("  → Content CHANGED (hash mismatch)")
+                            any_changed = True
+                        else:
+                            print("  → Content unchanged (hash match)")
+                    else:
+                        print("  → New list (no previous state)")
+                        any_changed = True
+
+                    # Write domains to annotated stream (stripped to base domains)
                     count = 0
-                    for domain in parse_domains_stream(lines):
+                    for domain in parse_domains_stream(lines, psl):
                         f_out.write(f"{domain}\t{list_id}\t{is_general_flag}\n")
                         count += 1
 
                     list_stats[name] = count
                     print(f"  → Found {count:,} domains")
+
                 except Exception as e:
                     print(f"  → Error: {e}", file=sys.stderr)
                     list_stats[name] = 0
 
-    return list_stats, id_to_name
+                    # Track consecutive failures
+                    if name in state.lists:
+                        state.lists[name].consecutive_failures += 1
+
+    return list_stats, id_to_name, new_hashes, any_changed
 
 
 def process_annotated_pipeline(
@@ -611,14 +1011,6 @@ def update_readme(
             r"(Use `hosts_nsfw` for all the same domains in `hosts` \*\*\*plus\*\*\* adult content \(\*\*~)[^)]+(\*\*\))",
             rf"\g<1>{nsfw_formatted} domains\g<2>",
         ),
-        (
-            r'(Output1\[\("📄 hosts<br/>\(General Only\)<br/>)[0-9.]+M( domains"\)\])',
-            rf"\g<1>{general_formatted}\g<2>",
-        ),
-        (
-            r'(Output2\[\("🔞 hosts_nsfw<br/>\(Complete\)<br/>)[0-9.]+M( domains"\)\])',
-            rf"\g<1>{nsfw_formatted}\g<2>",
-        ),
     ]
 
     for pattern, replacement in replacements:
@@ -675,16 +1067,81 @@ def update_readme(
         + stats_section
         + content[stats_end + len("<!-- STATS_END -->") :]
     )
+
+    # Update acknowledgments section
+    ack_start = new_content.find("<!-- ACKNOWLEDGMENTS_START -->")
+    ack_end = new_content.find("<!-- ACKNOWLEDGMENTS_END -->")
+
+    if ack_start != -1 and ack_end != -1:
+        acknowledgments = build_acknowledgments(blocklists)
+        ack_section = f"""<!-- ACKNOWLEDGMENTS_START -->
+
+Thanks to the maintainers of all source blocklists:
+
+{acknowledgments}
+
+<!-- ACKNOWLEDGMENTS_END -->"""
+
+        new_content = (
+            new_content[:ack_start]
+            + ack_section
+            + new_content[ack_end + len("<!-- ACKNOWLEDGMENTS_END -->") :]
+        )
+
     readme_path.write_text(new_content)
     print("Updated README.md with dual statistics tables")
 
 
+def build_acknowledgments(blocklists: list[dict[str, str]]) -> str:
+    """
+    Build acknowledgments list from active blocklists.
+
+    Groups blocklists by maintainer and removes duplicates.
+    Uses optional acknowledgment fields from blocklist configuration.
+
+    Args:
+        blocklists: List of blocklist configurations
+
+    Returns:
+        Formatted acknowledgments as markdown list
+    """
+    # Track unique maintainers: maintainer_name -> (url, description)
+    maintainers: dict[str, tuple[str, str]] = {}
+
+    for blocklist in blocklists:
+        # Check for optional acknowledgment fields
+        maintainer_name = blocklist.get("maintainer_name")
+        maintainer_url = blocklist.get("maintainer_url")
+        maintainer_desc = blocklist.get("maintainer_description")
+
+        # Only add if all acknowledgment fields are present
+        if maintainer_name and maintainer_url and maintainer_desc:
+            # Use maintainer_name as key to deduplicate
+            if maintainer_name not in maintainers:
+                maintainers[maintainer_name] = (maintainer_url, maintainer_desc)
+
+    # Sort by maintainer name alphabetically
+    sorted_maintainers = sorted(maintainers.items())
+
+    # Build markdown list
+    lines = []
+    for maintainer_name, (url, desc) in sorted_maintainers:
+        lines.append(f"- [{maintainer_name}]({url}) - {desc}")
+
+    return "\n".join(lines) if lines else "No maintainer information available."
+
+
 def main() -> int:
     """
-    Execute main compilation process using annotated streaming pipeline.
+    Execute compilation with hash-based change detection.
 
-    Pipeline: annotate → one sort → streaming group-by
-    Complexity: O(N log N) sort + O(N) streaming pass, O(k) memory for list counters.
+    Pipeline:
+    1. Load state from previous run
+    2. Check for stale lists (auto-purge if >180 days)
+    3. Fetch all lists + compute hashes concurrently
+    4. Compare hashes → skip compilation if unchanged
+    5. If changed: run full pipeline
+    6. Update state and commit
 
     Returns:
         Exit code: 0 on success, 1 on error
@@ -692,28 +1149,117 @@ def main() -> int:
     print("YAHA - Yet Another Host Aggregator")
     print("=" * 50)
 
+    current_time = datetime.now(timezone.utc)
+
     try:
+        # Step 1: Load state
+        print("\nLoading state from previous run...")
+        state = load_state()
+        print(f"  Previous compilation: {state.last_compilation or 'Never'}")
+        print(f"  Total compilations: {state.compilation_count}")
+        print(f"  Skipped compilations: {state.skipped_compilations}")
+
+        # Step 2: Load and check for stale lists
         print("\nLoading blocklist configuration...")
         blocklists = load_blocklists()
         print(f"Loaded {len(blocklists)} blocklist(s)")
 
+        print("\nChecking for stale lists...")
+        blocklists, purge_occurred = check_and_purge_stale_lists(
+            state, blocklists, current_time
+        )
+
+        if purge_occurred:
+            print("  Saving updated blocklists.json...")
+            with Path("blocklists.json").open("w") as f:
+                json.dump(blocklists, f, indent=2)
+                f.write("\n")  # Trailing newline
+            print(f"  Active lists after purge: {len(blocklists)}")
+        else:
+            print("  No stale lists found")
+
+        # Step 3: Load whitelist
         print("\nLoading whitelist...")
         whitelist = load_whitelist()
 
+        # Step 4: Load Public Suffix List
+        print("\nLoading Public Suffix List...")
+        psl = ensure_psl_and_load()
+        print(
+            f"  Loaded {len(psl.exact):,} exact, "
+            f"{len(psl.wildcards):,} wildcard, "
+            f"{len(psl.exceptions):,} exception rules"
+        )
+
+        # Step 5: Fetch + hash all lists concurrently
         blocklists_dir = Path("blocklists")
         blocklists_dir.mkdir(exist_ok=True)
 
+        pipeline = PipelineFiles.create()
+
+        print("\nFetching blocklists and computing hashes...")
+        list_stats, id_to_name, new_hashes, any_changed = (
+            collect_blocklists_with_hashes(blocklists, pipeline.annotated, state, psl)
+        )
+
+        # Step 6: Update state with fetch results
+        for blocklist in blocklists:
+            name = blocklist["name"]
+            is_nsfw = blocklist.get("nsfw", False)
+            new_hash = new_hashes.get(name)
+
+            if not new_hash:
+                continue  # Fetch failed
+
+            old_state = state.lists.get(name)
+
+            if old_state:
+                # Update existing entry
+                changed = old_state.content_hash != new_hash
+                old_state.last_fetch_date = current_time.isoformat()
+                old_state.fetch_count += 1
+                old_state.consecutive_failures = 0
+
+                if changed:
+                    old_state.content_hash = new_hash
+                    old_state.last_changed_date = current_time.isoformat()
+                    old_state.change_count += 1
+            else:
+                # New list
+                state.lists[name] = ListState(
+                    url=blocklist["url"],
+                    content_hash=new_hash,
+                    last_fetch_date=current_time.isoformat(),
+                    last_changed_date=current_time.isoformat(),
+                    fetch_count=1,
+                    change_count=1,
+                    consecutive_failures=0,
+                    nsfw=is_nsfw,
+                )
+
+        # Step 7: Decide whether to compile
+        force_compile = should_force_compile(state, current_time)
+
+        if not any_changed and not force_compile and not purge_occurred:
+            print("\nNo changes detected - skipping compilation")
+            print(f"Last compilation was at {state.last_compilation}")
+            state.skipped_compilations += 1
+            pipeline.cleanup()
+            save_state(state)
+            return 0
+
+        if force_compile:
+            print("\nWARNING: Forcing compilation (weekly schedule)")
+        elif purge_occurred:
+            print("\nWARNING: Compiling due to purged lists")
+        else:
+            print("\nChanges detected - proceeding with compilation")
+
+        # Step 8: Run full compilation pipeline
         hosts_path = blocklists_dir / "hosts"
         hosts_nsfw_path = blocklists_dir / "hosts_nsfw"
 
-        pipeline = PipelineFiles.create()
-
-        print("\nStep 1: Fetching blocklists and emitting annotated stream...")
-        list_stats, id_to_name = collect_blocklists_annotated(
-            blocklists, pipeline.annotated
-        )
-
-        print("\nStep 2: Processing through sort → group-by pipeline...")
+        print("\nProcessing through sort → group-by pipeline...")
         all_count, general_count, contribution_stats, whitelisted_count = (
             process_annotated_pipeline(pipeline, id_to_name, whitelist)
         )
@@ -723,8 +1269,8 @@ def main() -> int:
         if whitelisted_count > 0:
             print(f"  Whitelisted domains (filtered): {whitelisted_count:,}")
 
-        print("\nStep 3: Generating hosts files...")
-        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        print("\nGenerating hosts files...")
+        timestamp = current_time.strftime("%Y-%m-%d %H:%M:%S UTC")
 
         general_header = build_header(
             "GENERAL - No NSFW", general_count, blocklists, list_stats, False, timestamp
@@ -743,7 +1289,7 @@ def main() -> int:
         print(f"  Wrote {general_count:,} domains to blocklists/hosts")
         print(f"  Wrote {all_count:,} domains to blocklists/hosts_nsfw")
 
-        print("\nStep 4: Updating README...")
+        print("\nUpdating README...")
         update_readme(
             blocklists,
             list_stats,
@@ -753,10 +1299,18 @@ def main() -> int:
             timestamp,
         )
 
-        print("\nStep 5: Cleaning up temporary files...")
+        print("\nCleaning up temporary files...")
         pipeline.cleanup()
 
-        print("\n✓ Compilation complete")
+        # Update compilation stats
+        state.last_compilation = current_time.isoformat()
+        state.compilation_count += 1
+
+        print("\nCompilation complete")
+
+        # Save state
+        save_state(state)
+
         return 0
 
     except (FileNotFoundError, json.JSONDecodeError, ValueError) as e:

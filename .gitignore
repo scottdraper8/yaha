@@ -47,5 +47,8 @@ Thumbs.db
 # Discovery files
 discovery/
 
-# Generated blocklist files
+# Generated blocklist files (not committed, created in workflow)
 blocklists/
+
+# Public Suffix List (auto-downloaded, refreshed every 30 days)
+public_suffix_list.dat
