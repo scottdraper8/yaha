@@ -8,7 +8,7 @@ from pathlib import Path
 import subprocess
 
 from src.config import SourceConfig, Whitelist, load_whitelist
-from src.domain_processor import extract_domains_from_lines, load_public_suffix_list
+from src.domain_processor import extract_domains_from_lines
 from src.fetcher import fetch_url_with_hash
 from src.hosts_generator import generate_hosts_file_from_file
 from src.pipeline import PipelineFiles, process_annotated_pipeline
@@ -18,7 +18,7 @@ from src.state_manager import CompilationState, load_state, save_state, update_s
 class TestEndToEndPipeline:
     """End-to-end integration tests."""
 
-    def test_fetch_and_parse_real_blocklist(self, tmp_path: Path) -> None:
+    def test_fetch_and_parse_real_blocklist(self) -> None:
         """Test fetching and parsing a real blocklist."""
         url = "https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn/hosts"
 
@@ -26,11 +26,7 @@ class TestEndToEndPipeline:
 
         assert len(content_hash) == 64
 
-        psl_path = tmp_path / "psl.dat"
-        psl_path.write_text("com\nnet\norg\nio\n")
-
-        psl = load_public_suffix_list(psl_path)
-        domains = list(extract_domains_from_lines(lines, psl))
+        domains = list(extract_domains_from_lines(lines))
 
         assert len(domains) > 0
 

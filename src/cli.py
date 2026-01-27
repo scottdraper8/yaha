@@ -19,7 +19,7 @@ import sys
 from typing import Any
 
 from src.config import SourceConfig, load_sources, load_whitelist, save_sources
-from src.domain_processor import ensure_psl_and_load, extract_domains_from_lines
+from src.domain_processor import extract_domains_from_lines
 from src.fetcher import FetchError, fetch_url_with_hash
 from src.hosts_generator import format_count, generate_hosts_file_from_file
 from src.pipeline import ContributionStats, PipelineFiles, process_annotated_pipeline
@@ -66,7 +66,6 @@ def collect_sources_with_hashes(
     sources: list[SourceConfig],
     output_file: Path,
     state: Any,
-    psl: Any,
 ) -> tuple[dict[str, int], dict[int, str], dict[str, str], bool]:
     """
     Fetch all sources, compute hashes, and check for changes.
@@ -110,7 +109,7 @@ def collect_sources_with_hashes(
 
                 # Write domains to annotated stream
                 count = 0
-                for domain in extract_domains_from_lines(lines, psl):
+                for domain in extract_domains_from_lines(lines):
                     f_out.write(f"{domain}\t{source_id}\t{is_general_flag}\n")
                     count += 1
 
@@ -344,16 +343,7 @@ def main() -> int:
         if total_wl > 0:
             print(f"  Loaded {len(whitelist.exact)} exact, {len(whitelist.wildcards)} wildcard(s)")
 
-        # Step 4: Load Public Suffix List
-        print("\nLoading Public Suffix List...")
-        psl = ensure_psl_and_load()
-        print(
-            f"  Loaded {len(psl.exact):,} exact, "
-            f"{len(psl.wildcards):,} wildcard, "
-            f"{len(psl.exceptions):,} exception rules"
-        )
-
-        # Step 5: Fetch + hash all sources concurrently
+        # Step 4: Fetch + hash all sources concurrently
         blocklists_dir = Path("blocklists")
         blocklists_dir.mkdir(exist_ok=True)
 
@@ -361,10 +351,10 @@ def main() -> int:
 
         print("\nFetching sources and computing hashes...")
         source_stats, id_to_name, _new_hashes, any_changed = collect_sources_with_hashes(
-            sources, pipeline.annotated, state, psl
+            sources, pipeline.annotated, state
         )
 
-        # Step 6: Decide whether to compile
+        # Step 5: Decide whether to compile
         force_compile = args.force or should_force_compile(state, current_time)
 
         if not any_changed and not force_compile and not purge_occurred:
@@ -384,7 +374,7 @@ def main() -> int:
         else:
             print("\nChanges detected - proceeding with compilation")
 
-        # Step 7: Run full compilation pipeline
+        # Step 6: Run full compilation pipeline
         hosts_path = blocklists_dir / "hosts"
         hosts_nsfw_path = blocklists_dir / "hosts_nsfw"
 
