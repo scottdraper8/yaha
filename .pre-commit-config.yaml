@@ -1,17 +1,35 @@
 repos:
+  # 1. Poetry dependency management and version syncing
+  - repo: https://github.com/floatingpurr/sync_with_poetry
+    rev: "1.2.1"
+    hooks:
+      - id: sync_with_poetry
+
+  # 2. Core pre-commit utilities - basic checks and file formatting
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-yaml
+      # Security checks
+      - id: detect-private-key
+
+      # File format validation
       - id: check-json
+      - id: check-toml
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: check-case-conflict
       - id: check-added-large-files
         args: ['--maxkb=102400']  # GitHub's 100MB limit
+
+      # File formatting
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
       - id: mixed-line-ending
 
+  # 3. Code linting, formatting, and type checking
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.10
+    rev: v0.14.14
     hooks:
       - id: ruff
         args: [--fix]
@@ -21,8 +39,13 @@ repos:
     rev: v1.19.1
     hooks:
       - id: mypy
-        args: [--python-version=3.10, --ignore-missing-imports, --no-strict-optional]
-        additional_dependencies: [curl-cffi>=0.7.0, packaging>=25.0]
+        files: ^src/.*\.py$
+        additional_dependencies: [curl-cffi>=0.14.0]
+
+  - repo: https://github.com/tox-dev/pyproject-fmt
+    rev: v2.11.1
+    hooks:
+      - id: pyproject-fmt
 
   - repo: https://github.com/DavidAnson/markdownlint-cli2
     rev: v0.20.0

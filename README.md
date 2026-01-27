@@ -3,8 +3,9 @@
 # YAHA - Yet Another Host Aggregator
 
 [![Update Blocklist](https://github.com/scottdraper8/yaha/actions/workflows/update-blocklist.yml/badge.svg)](https://github.com/scottdraper8/yaha/actions/workflows/update-blocklist.yml)
-[![Python 3.10+](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/)
-[![pre-commit](https://img.shields.io/badge/pre--commit-v4.5.1-FAB040?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/)
+[![Poetry](https://img.shields.io/badge/Poetry-1.8+-60A5FA?logo=poetry&logoColor=white)](https://python-poetry.org/)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-FAB040?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
 ---
 
@@ -52,28 +53,28 @@ The workflow runs every 12 hours via GitHub Actions. It fetches all blocklists c
 flowchart LR
     Start([GitHub Actions Trigger<br/>Every 12 Hours])
 
-    Start --> Init[Load State & Configuration]
+    Start --> Init[Load State & Config]
     Init --> LoadWhitelist[Load Whitelist]
-    LoadWhitelist --> LoadPSL[Load/Update PSL]
-    LoadPSL --> CheckStale{Stale Lists?<br/>&gt;180 days}
+    LoadWhitelist --> LoadPSL[Download/Load PSL]
+    LoadPSL --> CheckStale{Stale Sources?<br/>&gt;180 days}
 
-    CheckStale -->|Yes| PurgeStale[Purge & Update Config]
+    CheckStale -->|Yes| PurgeStale[Purge & Save Config]
     CheckStale -->|No| FetchPhase
-    PurgeStale --> FetchPhase[Concurrent Fetch Phase]
+    PurgeStale --> FetchPhase[Concurrent Fetch]
 
     subgraph FetchPhase [" "]
         direction LR
-        Fetch1[Fetch List 1<br/>+ SHA256]
-        Fetch2[Fetch List 2<br/>+ SHA256]
-        Fetch3[Fetch List 3<br/>+ SHA256]
-        FetchN[Fetch List N<br/>+ SHA256]
+        Fetch1[Source 1<br/>SHA256 Hash]
+        Fetch2[Source 2<br/>SHA256 Hash]
+        Fetch3[Source 3<br/>SHA256 Hash]
+        FetchN[Source N<br/>SHA256 Hash]
 
         Fetch1 ~~~ Fetch2
         Fetch2 ~~~ Fetch3
         Fetch3 ~~~ FetchN
     end
 
-    FetchPhase --> CompareHashes{Hash<br/>Changes?}
+    FetchPhase --> CompareHashes{Hash<br/>Changed?}
 
     CompareHashes -->|No Changes| ForceCheck{Weekly<br/>Force?}
     ForceCheck -->|No| Skip[Skip Compilation]
@@ -83,23 +84,23 @@ flowchart LR
 
     subgraph Pipeline [" "]
         direction TB
-        Parse[Parse All Formats<br/>hosts/raw/adblock]
-        Parse --> Extract[Extract Base Domains<br/>PSL Lookup]
-        Extract --> Annotate[Annotate Metadata<br/>list_id + is_general]
-        Annotate --> Sort[External Sort<br/>by domain]
-        Sort --> Dedupe[Streaming Deduplication<br/>+ Whitelist Filter]
-        Dedupe --> SplitCalc[Split Outputs<br/>+ Calculate Stats]
+        Parse[Parse Formats<br/>hosts/raw/adblock]
+        Parse --> Extract[Extract Registrable<br/>Domains via PSL]
+        Extract --> Annotate[Annotate Stream<br/>source_id + category]
+        Annotate --> Sort[External Sort<br/>by domain + source]
+        Sort --> Dedupe[Stream Dedup<br/>+ Whitelist Filter]
+        Dedupe --> Stats[Calculate<br/>Contributions]
     end
 
     Pipeline --> GenHosts[(hosts<br/>General Only)]
     Pipeline --> NSFWHosts[(hosts_nsfw<br/>Complete)]
-    Pipeline --> UpdateStats[Update README Stats]
+    Pipeline --> UpdateREADME[Update README]
 
-    UpdateStats --> SaveState[Save State]
+    UpdateREADME --> SaveState[Save State]
     Skip --> SaveState
 
     SaveState --> Release{Compiled?}
-    Release -->|Yes| CreateRelease[Create GitHub Release]
+    Release -->|Yes| CreateRelease[GitHub Release]
     Release -->|No| End([End])
     CreateRelease --> End
 
@@ -203,32 +204,85 @@ flowchart LR
 
 **Prerequisites:**
 
-- Python 3.10 or higher
+- Python 3.11 or higher
+- [Poetry](https://python-poetry.org/docs/#installation) for dependency management
 
 **Clone and setup:**
 
 ```bash
 git clone https://github.com/scottdraper8/yaha.git
 cd yaha
-python3 -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+poetry install
 ```
 
 **Install pre-commit hooks:**
 
 ```bash
-pip install pre-commit
-pre-commit install
+poetry run pre-commit install
 ```
 
 **Run locally:**
 
 ```bash
-python compile_blocklist.py
+# Normal run (skips if no changes detected)
+poetry run yaha
+
+# Force recompilation (ignores hash checks)
+poetry run yaha --force
 ```
 
-Fetches all configured blocklists, parses domains, applies whitelist filters, deduplicates, generates both hosts files, and updates README statistics.
+The compiler fetches all configured sources, parses domains, applies whitelist filters, deduplicates, generates both hosts files, and updates README statistics.
+
+### Project Structure
+
+```text
+yaha/
+├── src/                     # Source code (modular, zero-knowledge components)
+│   ├── cli.py               # Main orchestrator (business logic)
+│   ├── config.py            # Configuration loading and validation
+│   ├── domain_processor.py  # PSL-based domain extraction
+│   ├── fetcher.py           # HTTP fetching with hash computation
+│   ├── hosts_generator.py   # Hosts file generation
+│   ├── pipeline.py          # Deduplication and contribution stats
+│   └── state_manager.py     # State persistence and staleness checks
+├── tests/                   # Comprehensive test suite (78 tests)
+├── blocklists.json          # Source configuration
+├── whitelist.txt            # Domain whitelist
+├── state.json               # Runtime state (hashes, timestamps)
+├── pyproject.toml           # Poetry configuration
+└── .pre-commit-config.yaml  # Pre-commit hooks
+```
+
+### Development Workflow
+
+**Run tests:**
+
+```bash
+# Run all tests
+poetry run pytest
+
+# Run with coverage report
+poetry run pytest --cov=src --cov-report=term-missing
+
+# Run specific test file
+poetry run pytest tests/test_domain_processor.py
+```
+
+**Code quality checks:**
+
+```bash
+# Linting (with auto-fix)
+poetry run ruff check src/ tests/ --fix
+
+# Formatting
+poetry run ruff format src/ tests/
+
+# Type checking
+poetry run mypy src/
+
+# Run all pre-commit hooks
+poetry run pre-commit run --all-files
+```
 
 ### Configuration
 
@@ -289,26 +343,53 @@ example.com
 
 Whitelisted domains are filtered during the deduplication pass.
 
-### Performance Configuration
+### Architecture
 
-In `compile_blocklist.py`, you can adjust these constants:
+YAHA follows a modular, zero-knowledge architecture where each component is designed to be reusable and unaware of the specific business domain:
 
-- `MAX_WORKERS = 5`: Maximum concurrent blocklist fetches
-- `REQUEST_TIMEOUT = 30`: Request timeout in seconds
-- `STALE_THRESHOLD_DAYS = 180`: Days before inactive lists are auto-purged
+- **`config.py`**: Loads and validates source configurations and whitelist
+- **`domain_processor.py`**: Extracts registrable domains using Public Suffix List rules (no knowledge of "blocklists")
+- **`fetcher.py`**: Generic HTTP fetching with SHA256 hashing (no knowledge of domains)
+- **`pipeline.py`**: Generic deduplication and contribution tracking using external sort (no knowledge of "blocklists" or "NSFW")
+- **`hosts_generator.py`**: Generic hosts file I/O (no knowledge of sources or categories)
+- **`state_manager.py`**: Persists state and detects staleness (no knowledge of "NSFW" or specific business rules)
+- **`cli.py`**: Main orchestrator containing all business logic (knows about "blocklists", "NSFW", purging rules, etc.)
+
+This separation ensures components remain maintainable and testable in isolation.
+
+### Performance Tuning
+
+In `src/cli.py`, adjust these constants:
+
+- `MAX_WORKERS = 5`: Maximum concurrent source fetches
+- `REQUEST_TIMEOUT = 30`: HTTP request timeout in seconds
+
+In `src/state_manager.py`:
+
+- `STALE_THRESHOLD_DAYS = 180`: Days before inactive sources are auto-purged
 
 > [!WARNING]
-> If you add many sources or experience rate limiting, adjust `MAX_WORKERS` to control concurrency.
+> If you add many sources or experience rate limiting, reduce `MAX_WORKERS` to control concurrency.
 
 ### Change Detection
 
 Hash-based change detection determines whether compilation is necessary:
 
-- **Hash comparison**: Each blocklist's content is hashed (SHA256). If no hashes change between runs, compilation is skipped.
-- **State tracking**: `state.json` stores hash history, fetch counts, and change timestamps.
-- **Auto-purge**: Lists that haven't updated in 180+ days are removed from `blocklists.json`.
-- **Preserve flag**: Set `"preserve": true` to prevent auto-purge for specific lists.
-- **Weekly forced compilation**: Runs every Sunday at midnight UTC regardless of hash changes.
+- **Hash comparison**: Each source's content is hashed (SHA256). If no hashes change between runs, compilation is skipped
+- **State tracking**: `state.json` stores hash history, fetch counts, and change timestamps
+- **Auto-purge**: Sources that haven't updated in 180+ days are removed from `blocklists.json`
+- **Preserve flag**: Set `"preserve": true` to prevent auto-purge for specific sources
+- **Weekly forced compilation**: Runs every Sunday at midnight UTC regardless of hash changes
+
+### Testing
+
+The test suite includes:
+
+- **Unit tests**: Individual module functionality (config, domain processing, fetching, pipeline, state management)
+- **Integration tests**: End-to-end pipeline with real HTTP requests
+- **78 total tests** with comprehensive coverage
+
+Tests are designed to avoid testing third-party library functionality (e.g., `curl_cffi`, `hashlib`) and focus on YAHA-specific logic.
 
 ## Acknowledgments
 
