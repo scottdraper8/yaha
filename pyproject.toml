@@ -5,14 +5,12 @@ requires = [ "poetry-core>=2" ]
 [project]
 name = "yaha"
 version = "2.0.0"
-description = "Yet Another Host Aggregator - Compile blocklists with hash-based change detection"
+description = "Yet Another Host Aggregator - Blocklist compiler & deduplicator"
 readme = "README.md"
 keywords = [ "adblock", "blocklist", "dns", "hosts", "privacy" ]
 
 license = "MIT"
-authors = [
-  { name = "Scott Draper" },
-]
+authors = [ { name = "Scott Draper" } ]
 requires-python = ">=3.11"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
