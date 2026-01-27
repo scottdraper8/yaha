@@ -10,11 +10,10 @@
 
 ---
 
-Automated blocklist aggregator compiling millions of domains from
-multiple sources. Blocks ads, trackers, malware, and optionally NSFW
-content. Perfect for applications like
-[TrackerControl](https://f-droid.org/packages/net.kollnig.missioncontrol.fdroid/),
-Pi-hole, and other DNS/hosts-based blockers.
+Automated blocklist aggregator that compiles multiple source lists into a
+unified, deduplicated hosts file. Originally designed for applications like
+[TrackerControl](https://f-droid.org/packages/net.kollnig.missioncontrol.fdroid/)
+only capable of supporting one blocklist URL.
 
 ---
 
@@ -155,8 +154,9 @@ flowchart LR
 </div>
 
 > [!NOTE]
-> **Unique Contribution** shows how many domains would disappear if that source were removed.
-> Sources with low unique counts (~50 or less) provide minimal value.
+> **Unique Contribution** shows how many domains would disappear if that source
+> were removed. Sources with low unique counts (~50 or less) provide minimal
+> value.
 
 <!-- STATS_END -->
 
@@ -350,13 +350,20 @@ In `src/state_manager.py`:
 Thanks to the maintainers of all source blocklists:
 
 - [Anudeep ND](https://github.com/anudeepND/blacklist) - Adservers blacklist
-- [AssoEchap](https://github.com/AssoEchap/stalkerware-indicators) - Stalkerware indicators
-- [Cyber Threat Coalition](https://cyberthreatcoalition.org/) - Malware blocklist
-- [DandelionSprout](https://github.com/DandelionSprout/adfilt) - Anti-Malware List
-- [Firebog](https://firebog.net/) - RPiList Phishing/Malware, Prigent collections, AdGuard DNS, EasyPrivacy
-- [HaGeZi](https://github.com/hagezi/dns-blocklists) - Multi-pro, Threat Intelligence, DGA, and NSFW lists
-- [Malware Filter](https://gitlab.com/malware-filter/phishing-filter) - Phishing filter
-- [Matomo](https://github.com/matomo-org/referrer-spam-blacklist) - Referrer spam blacklist
+- [AssoEchap](https://github.com/AssoEchap/stalkerware-indicators) -
+  Stalkerware indicators
+- [Cyber Threat Coalition](https://cyberthreatcoalition.org/) -
+  Malware blocklist
+- [DandelionSprout](https://github.com/DandelionSprout/adfilt) -
+  Anti-Malware List
+- [Firebog](https://firebog.net/) - RPiList Phishing/Malware, Prigent
+  collections, AdGuard DNS, EasyPrivacy
+- [HaGeZi](https://github.com/hagezi/dns-blocklists) - Multi-pro, Threat
+  Intelligence, DGA, and NSFW lists
+- [Malware Filter](https://gitlab.com/malware-filter/phishing-filter) -
+  Phishing filter
+- [Matomo](https://github.com/matomo-org/referrer-spam-blacklist) -
+  Referrer spam blacklist
 - [Polish Filters Team](https://github.com/PolishFiltersTeam/KADhosts) - KADhosts
 - [RooneyMcNibNug](https://github.com/RooneyMcNibNug/pihole-stuff) - SNAFU
 - [Spam404](https://github.com/Spam404/lists) - Main blacklist
