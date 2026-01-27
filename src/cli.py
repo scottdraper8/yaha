@@ -102,10 +102,10 @@ def collect_sources_with_hashes(
                 # Check if hash changed and update state
                 changed = update_source_state(state, source, content_hash, current_time)
                 if changed:
-                    print("  → Content CHANGED (hash mismatch)")
+                    print("  Content CHANGED (hash mismatch)")
                     any_changed = True
                 else:
-                    print("  → Content unchanged (hash match)")
+                    print("  Content unchanged (hash match)")
 
                 # Write domains to annotated stream
                 count = 0
@@ -114,10 +114,10 @@ def collect_sources_with_hashes(
                     count += 1
 
                 source_stats[source.name] = count
-                print(f"  → Found {count:,} domains")
+                print(f"  Found {count:,} domains")
 
             except FetchError as e:
-                print(f"  → Error: {e}", file=sys.stderr)
+                print(f"  Error: {e}", file=sys.stderr)
                 source_stats[source.name] = 0
 
     return source_stats, id_to_name, new_hashes, any_changed
@@ -378,7 +378,7 @@ def main() -> int:
         hosts_path = blocklists_dir / "hosts"
         hosts_nsfw_path = blocklists_dir / "hosts_nsfw"
 
-        print("\nProcessing through sort → group-by pipeline...")
+        print("\nProcessing through sort and group-by pipeline...")
         all_count, general_count, contribution_stats, whitelisted_count = (
             process_annotated_pipeline(pipeline, id_to_name, whitelist)
         )

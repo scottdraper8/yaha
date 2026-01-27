@@ -188,7 +188,7 @@ jobs:
 
           git push origin temp-squash:main --force
 
-          echo "✓ Successfully squashed ${TOTAL_BOT_COUNT} ${BOT_AUTHOR_LABEL} commits from ${PREVIOUS_YEAR} into ${ARCHIVE_COUNT} archive commit(s)"
+          echo "Successfully squashed ${TOTAL_BOT_COUNT} ${BOT_AUTHOR_LABEL} commits from ${PREVIOUS_YEAR} into ${ARCHIVE_COUNT} archive commit(s)"
 
       - name: Cleanup
         if: always()
