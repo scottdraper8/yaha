@@ -56,7 +56,7 @@ def process_annotated_pipeline(
     quiet: bool = False,
 ) -> tuple[int, int, ContributionStats, int]:
     """
-    Process annotated stream through sort → streaming group-by pipeline.
+    Process annotated stream through sort and streaming group-by pipeline.
 
     Single external sort by domain, then streaming group-by that:
     - Writes deduplicated domains to ALL output (sorted)
