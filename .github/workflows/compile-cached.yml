@@ -109,18 +109,55 @@ jobs:
           See [README](https://github.com/scottdraper8/yaha#readme) for detailed statistics and source list breakdown.
           EOF
 
-          # Delete existing 'latest' release and tag if it exists
-          gh release delete latest --yes 2>/dev/null || true
-          git push --delete origin latest 2>/dev/null || true
+          # Delete existing 'latest' release and tag with retry logic
+          for i in 1 2 3; do
+            if gh release delete latest --yes 2>/dev/null; then
+              echo "Release deleted successfully"
+              break
+            fi
+            if [ $i -lt 3 ]; then
+              echo "Release delete attempt $i failed, retrying..."
+              sleep 2
+            else
+              echo "Release does not exist or already deleted"
+            fi
+          done
 
-          # Create new 'latest' release with updated files
-          gh release create latest \
-            --title "YAHA Blocklist - Latest" \
-            --notes-file release_notes.md \
-            blocklists/hosts \
-            blocklists/hosts_nsfw
+          for i in 1 2 3; do
+            if git push --delete origin latest 2>/dev/null; then
+              echo "Tag deleted successfully"
+              break
+            fi
+            if [ $i -lt 3 ]; then
+              echo "Tag delete attempt $i failed, retrying..."
+              sleep 2
+            else
+              echo "Tag does not exist or already deleted"
+            fi
+          done
 
-          echo "Release 'latest' updated with ${GENERAL_COUNT} general / ${NSFW_COUNT} complete domains"
+          # Wait for deletion to propagate
+          sleep 3
+
+          # Create new 'latest' release with retry logic for transient API errors
+          for i in 1 2 3 4; do
+            if gh release create latest \
+              --title "YAHA Blocklist - Latest" \
+              --notes-file release_notes.md \
+              blocklists/hosts \
+              blocklists/hosts_nsfw; then
+              echo "Release 'latest' updated with ${GENERAL_COUNT} general / ${NSFW_COUNT} complete domains"
+              break
+            fi
+            
+            if [ $i -lt 4 ]; then
+              echo "Release creation attempt $i failed, retrying in $((2 ** i)) seconds..."
+              sleep $((2 ** i))
+            else
+              echo "Failed to create release after 4 attempts"
+              exit 1
+            fi
+          done
 
       - name: Commit README and state to main
         run: |
