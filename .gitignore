@@ -35,6 +35,7 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+.directory
 
 # Logs
 logs/
