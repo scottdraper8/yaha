@@ -11,3 +11,6 @@
 # Aurora Store - Open source alternative app store
 *.aurorastore.org
 *.auroraoss.com
+
+# gofile.io - File sharing service
+*.gofile.io
