@@ -1,4 +1,4 @@
-name: Annual History Cleanup
+name: One-time 2026 History Cleanup
 
 on:
   schedule:
@@ -26,7 +26,8 @@ jobs:
       - name: Squash github-actions[bot] commits from previous year
         run: |
           CURRENT_YEAR=$(date +%Y)
-          PREVIOUS_YEAR=$((CURRENT_YEAR - 1))
+          # One-time cleanup of the current year's accumulated bot commits.
+          PREVIOUS_YEAR=$CURRENT_YEAR
           YEAR_START="${PREVIOUS_YEAR}-01-01"
           YEAR_END="${PREVIOUS_YEAR}-12-31 23:59:59"
           ORIGINAL_HEAD=$(git rev-parse HEAD)
