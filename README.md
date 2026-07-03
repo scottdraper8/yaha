@@ -276,7 +276,8 @@ In `src/cli.py`, adjust:
 
 In `src/fetcher.py`, adjust:
 
-- `REQUEST_TIMEOUT = 30`: HTTP request timeout in seconds
+- `REQUEST_TIMEOUT = 90`: HTTP request timeout per attempt
+- `MAX_FETCH_ATTEMPTS = 3`: Requests made before a source is reported unavailable
 
 In `src/state_manager.py`:
 
