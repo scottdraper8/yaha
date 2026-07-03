@@ -47,9 +47,9 @@ analysis state; it does not generate or publish a combined host list.
 
 <div align="center">
 
-![General Domains](https://img.shields.io/badge/General_Domains-5,802,617-8be9fd?style=for-the-badge&labelColor=6272a4)
-![Total Domains](https://img.shields.io/badge/Total_Domains_(with_NSFW)-10,642,299-ff79c6?style=for-the-badge&labelColor=6272a4)
-![Last Updated](https://img.shields.io/badge/Last_Updated-2026--07--03_14:55:12_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
+![General Domains](https://img.shields.io/badge/General_Domains-5,802,636-8be9fd?style=for-the-badge&labelColor=6272a4)
+![Total Domains](https://img.shields.io/badge/Total_Domains_(with_NSFW)-10,642,317-ff79c6?style=for-the-badge&labelColor=6272a4)
+![Last Updated](https://img.shields.io/badge/Last_Updated-2026--07--03_15:19:07_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
 
 ### General Host Lists
 
@@ -65,18 +65,18 @@ analysis state; it does not generate or publish a combined host list.
 </thead>
 <tbody>
 <tr><td><a href='https://raw.githubusercontent.com/hagezi/nrd/main/adblock/dga30.txt'>HaGeZi DGA 30 Days</a></td><td>2,380,363</td><td>2,334,445</td><td>No</td></tr>
-<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt'>HaGeZi Threat Intelligence</a></td><td>1,824,248</td><td>1,423,995</td><td>No</td></tr>
-<tr><td><a href='https://v.firebog.net/hosts/RPiList-Malware.txt'>RPiList Malware</a></td><td>1,039,235</td><td>826,904</td><td>No</td></tr>
-<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt'>HaGeZi Multi-pro Extended</a></td><td>511,403</td><td>326,396</td><td>No</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt'>HaGeZi Threat Intelligence</a></td><td>1,824,248</td><td>1,423,994</td><td>No</td></tr>
+<tr><td><a href='https://v.firebog.net/hosts/RPiList-Malware.txt'>RPiList Malware</a></td><td>1,039,235</td><td>826,889</td><td>No</td></tr>
+<tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt'>HaGeZi Multi-pro Extended</a></td><td>511,403</td><td>326,394</td><td>No</td></tr>
 <tr><td><a href='https://raw.githubusercontent.com/RooneyMcNibNug/pihole-stuff/master/SNAFU.txt'>SNAFU</a></td><td>74,766</td><td>70,792</td><td>No</td></tr>
 <tr><td><a href='https://big.oisd.nl'>OISD Big List</a></td><td>326,002</td><td>61,488</td><td>No</td></tr>
 <tr><td><a href='https://v.firebog.net/hosts/AdguardDNS.txt'>AdGuard DNS Filter</a></td><td>152,286</td><td>55,319</td><td>No</td></tr>
-<tr><td><a href='https://lists.cyberhost.uk/malware.txt'>Cyber Threat Coalition Malware</a></td><td>50,365</td><td>31,236</td><td>No</td></tr>
+<tr><td><a href='https://lists.cyberhost.uk/malware.txt'>Cyber Threat Coalition Malware</a></td><td>50,412</td><td>31,275</td><td>No</td></tr>
 <tr><td><a href='https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts'>Steven Black's Unified Hosts</a></td><td>82,927</td><td>19,945</td><td>No</td></tr>
 <tr><td><a href='https://v.firebog.net/hosts/Easyprivacy.txt'>EasyPrivacy</a></td><td>42,586</td><td>13,146</td><td>No</td></tr>
 <tr><td><a href='https://v.firebog.net/hosts/RPiList-Phishing.txt'>RPiList Phishing</a></td><td>146,215</td><td>12,905</td><td>No</td></tr>
 <tr><td><a href='https://hostfiles.frogeye.fr/firstparty-trackers-hosts.txt'>First-Party Trackers</a></td><td>14,999</td><td>11,432</td><td>No</td></tr>
-<tr><td><a href='https://v.firebog.net/hosts/Prigent-Crypto.txt'>Prigent Crypto</a></td><td>11,491</td><td>10,883</td><td>No</td></tr>
+<tr><td><a href='https://v.firebog.net/hosts/Prigent-Crypto.txt'>Prigent Crypto</a></td><td>11,491</td><td>10,882</td><td>No</td></tr>
 <tr><td><a href='https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts'>hostsVN</a></td><td>18,108</td><td>4,209</td><td>No</td></tr>
 <tr><td><a href='https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts.txt'>KADhosts</a></td><td>47,890</td><td>2,678</td><td>No</td></tr>
 <tr><td><a href='https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareHosts.txt'>DandelionSprout Anti-Malware</a></td><td>12,329</td><td>2,059</td><td>No</td></tr>
@@ -101,7 +101,7 @@ analysis state; it does not generate or publish a combined host list.
 </tr>
 </thead>
 <tbody>
-<tr><td><a href='https://v.firebog.net/hosts/Prigent-Adult.txt'>Prigent Adult</a></td><td>4,590,338</td><td>4,431,020</td><td>No</td></tr>
+<tr><td><a href='https://v.firebog.net/hosts/Prigent-Adult.txt'>Prigent Adult</a></td><td>4,590,338</td><td>4,431,019</td><td>No</td></tr>
 <tr><td><a href='https://nsfw.oisd.nl'>OISD NSFW</a></td><td>364,750</td><td>195,240</td><td>No</td></tr>
 <tr><td><a href='https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/nsfw.txt'>HaGeZi NSFW</a></td><td>105,402</td><td>45,994</td><td>No</td></tr>
 </tbody>
