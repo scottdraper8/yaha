@@ -147,8 +147,15 @@ jobs:
           fi
           git push --force-with-lease origin "HEAD:$branch"
 
-          if gh pr view "$branch" --repo "$REPOSITORY" >/dev/null 2>&1; then
-            gh pr edit "$branch" --repo "$REPOSITORY" \
+          pr_number=$(gh pr list \
+            --repo "$REPOSITORY" \
+            --head "$branch" \
+            --base main \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty')
+          if [ -n "$pr_number" ]; then
+            gh pr edit "$pr_number" --repo "$REPOSITORY" \
               --title "Update host-list analytics" \
               --body "Automated weekly host-list analytics and state update."
           else
@@ -168,17 +175,23 @@ jobs:
           HEAD_SHA: ${{ steps.update.outputs.head_sha }}
           REPOSITORY: ${{ github.repository }}
         run: |
-          # GITHUB_TOKEN-created PR events are recorded as action_required to
-          # prevent recursive workflow execution. Rerunning that exact run is
-          # safe here: this trusted job has already constrained the PR to the
-          # two generated files, and the rerun becomes the required PR check.
+          # A first-time GITHUB_TOKEN-created PR can be recorded as
+          # action_required to prevent recursive workflow execution. Rerunning
+          # that exact run is safe here: this trusted job has already
+          # constrained the PR to the two generated files. Once the bot is an
+          # established contributor, GitHub starts the PR run directly.
           for attempt in $(seq 1 15); do
-            run_id=$(gh api \
+            run_data=$(gh api \
               "repos/$REPOSITORY/actions/workflows/ci.yml/runs?branch=automation%2Fhost-list-analysis&event=pull_request&per_page=20" \
-              --jq ".workflow_runs[] | select(.head_sha == \"$HEAD_SHA\" and .conclusion == \"action_required\") | .id" \
+              --jq ".workflow_runs[] | select(.head_sha == \"$HEAD_SHA\") | [.id, .status, (.conclusion // \"\")] | @tsv" \
               | head -n 1)
-            if [ -n "$run_id" ]; then
-              gh run rerun "$run_id" --repo "$REPOSITORY"
+            if [ -n "$run_data" ]; then
+              IFS=$'\t' read -r run_id run_status run_conclusion <<< "$run_data"
+              if [ "$run_conclusion" = "action_required" ]; then
+                gh run rerun "$run_id" --repo "$REPOSITORY"
+              else
+                echo "Required PR CI is $run_status"
+              fi
               exit 0
             fi
             sleep 2
