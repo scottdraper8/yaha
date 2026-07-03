@@ -46,9 +46,9 @@ analysis state; it does not generate or publish a combined host list.
 
 <div align="center">
 
-![General Domains](https://img.shields.io/badge/General_Domains-5,802,607-8be9fd?style=for-the-badge&labelColor=6272a4)
-![Total Domains](https://img.shields.io/badge/Total_Domains_(with_NSFW)-10,642,289-ff79c6?style=for-the-badge&labelColor=6272a4)
-![Last Updated](https://img.shields.io/badge/Last_Updated-2026--07--03_14:40:55_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
+![General Domains](https://img.shields.io/badge/General_Domains-5,802,617-8be9fd?style=for-the-badge&labelColor=6272a4)
+![Total Domains](https://img.shields.io/badge/Total_Domains_(with_NSFW)-10,642,299-ff79c6?style=for-the-badge&labelColor=6272a4)
+![Last Updated](https://img.shields.io/badge/Last_Updated-2026--07--03_14:55:12_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
 
 ### General Host Lists
 
@@ -70,7 +70,7 @@ analysis state; it does not generate or publish a combined host list.
 <tr><td><a href='https://raw.githubusercontent.com/RooneyMcNibNug/pihole-stuff/master/SNAFU.txt'>SNAFU</a></td><td>74,766</td><td>70,792</td><td>No</td></tr>
 <tr><td><a href='https://big.oisd.nl'>OISD Big List</a></td><td>326,002</td><td>61,488</td><td>No</td></tr>
 <tr><td><a href='https://v.firebog.net/hosts/AdguardDNS.txt'>AdGuard DNS Filter</a></td><td>152,286</td><td>55,319</td><td>No</td></tr>
-<tr><td><a href='https://lists.cyberhost.uk/malware.txt'>Cyber Threat Coalition Malware</a></td><td>50,355</td><td>31,226</td><td>No</td></tr>
+<tr><td><a href='https://lists.cyberhost.uk/malware.txt'>Cyber Threat Coalition Malware</a></td><td>50,365</td><td>31,236</td><td>No</td></tr>
 <tr><td><a href='https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts'>Steven Black's Unified Hosts</a></td><td>82,927</td><td>19,945</td><td>No</td></tr>
 <tr><td><a href='https://v.firebog.net/hosts/Easyprivacy.txt'>EasyPrivacy</a></td><td>42,586</td><td>13,146</td><td>No</td></tr>
 <tr><td><a href='https://v.firebog.net/hosts/RPiList-Phishing.txt'>RPiList Phishing</a></td><td>146,215</td><td>12,905</td><td>No</td></tr>
