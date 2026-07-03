@@ -3,6 +3,7 @@
 Tests configuration loading, validation, and whitelist matching.
 """
 
+import json
 from pathlib import Path
 
 import pytest
@@ -77,6 +78,71 @@ class TestLoadSources:
         config_file.write_text('[{"name": "Test"}]')
 
         with pytest.raises(ValueError, match="missing 'name' or 'url'"):
+            load_sources(config_file)
+
+    @pytest.mark.parametrize(
+        "url,error",
+        [
+            ("http://example.com/list", "must use HTTPS"),
+            ("https://user:pass@example.com/list", "must not contain credentials"),
+            ("https://example.com/list#section", "must not contain a fragment"),
+            ("https://example.com:444/list", "default HTTPS port"),
+            ("https://127.0.0.1/list", "non-public IP address"),
+        ],
+    )
+    def test_rejects_unsafe_source_urls(self, tmp_path: Path, url: str, error: str) -> None:
+        """Source URLs must be canonical public HTTPS destinations."""
+        config_file = tmp_path / "blocklists.json"
+        config_file.write_text(json.dumps([{"name": "Test", "url": url}]))
+
+        with pytest.raises(ValueError, match=error):
+            load_sources(config_file)
+
+    def test_rejects_duplicate_names_and_urls(self, tmp_path: Path) -> None:
+        """Source identity must remain unambiguous."""
+        config_file = tmp_path / "blocklists.json"
+        config_file.write_text(
+            '[{"name":"Same","url":"https://example.com/a"},'
+            '{"name":"same","url":"https://example.com/b"}]'
+        )
+
+        with pytest.raises(ValueError, match="duplicate source name"):
+            load_sources(config_file)
+
+        config_file.write_text(
+            '[{"name":"One","url":"https://example.com/a"},'
+            '{"name":"Two","url":"https://example.com/a"}]'
+        )
+        with pytest.raises(ValueError, match="duplicate source URL"):
+            load_sources(config_file)
+
+    def test_rejects_invalid_maintainer_url(self, tmp_path: Path) -> None:
+        """Generated acknowledgement links receive the same URL validation."""
+        config_file = tmp_path / "blocklists.json"
+        config_file.write_text(
+            '[{"name":"Test","url":"https://example.com/list",'
+            '"maintainer_url":"javascript:alert(1)"}]'
+        )
+
+        with pytest.raises(ValueError, match=r"maintainer_url.*must use HTTPS"):
+            load_sources(config_file)
+
+    def test_rejects_control_characters_in_metadata(self, tmp_path: Path) -> None:
+        """Metadata cannot inject new Markdown lines or terminal controls."""
+        config_file = tmp_path / "blocklists.json"
+        config_file.write_text(
+            json.dumps(
+                [
+                    {
+                        "name": "Test",
+                        "url": "https://example.com/list",
+                        "maintainer_description": "safe\nunsafe",
+                    }
+                ]
+            )
+        )
+
+        with pytest.raises(ValueError, match="must not contain control characters"):
             load_sources(config_file)
 
 

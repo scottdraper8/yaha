@@ -8,14 +8,21 @@ import pytest
 
 from src.cli import collect_sources, update_readme
 from src.config import SourceConfig, Whitelist
-from src.fetcher import FetchError
+from src.fetcher import FetchedSource, FetchError
 from src.pipeline import ContributionStats, PipelineFiles, process_annotated_pipeline
 from src.state_manager import AnalysisState
 
 
-def _fetch_result(content: str) -> tuple[str, str, object]:
+def _fetch_result(content: str, destination: Path) -> FetchedSource:
+    destination.write_text(content)
     content_hash = hashlib.sha256(content.encode()).hexdigest()
-    return content_hash, content, iter(content.splitlines())
+    return FetchedSource(
+        content_hash=content_hash,
+        path=destination,
+        byte_count=len(content.encode()),
+        line_count=len(content.splitlines()),
+        final_url="https://example.com/list",
+    )
 
 
 def test_sources_flow_through_normalization_provenance_and_whitelist(
@@ -35,7 +42,7 @@ def test_sources_flow_through_normalization_provenance_and_whitelist(
     }
     monkeypatch.setattr(
         "src.cli.fetch_url_with_hash",
-        lambda url: _fetch_result(content_by_url[url]),
+        lambda url, destination, **_kwargs: _fetch_result(content_by_url[url], destination),
     )
     state = AnalysisState()
     pipeline = PipelineFiles.create(tmp_path)
@@ -68,7 +75,7 @@ def test_fetch_failure_is_reported_for_analysis_abort(
     source = SourceConfig(name="Unavailable", url="https://example.com/down")
     monkeypatch.setattr(
         "src.cli.fetch_url_with_hash",
-        lambda _url: (_ for _ in ()).throw(FetchError("network failure")),
+        lambda _url, _destination, **_kwargs: (_ for _ in ()).throw(FetchError("network failure")),
     )
 
     stats, _, changed, failures = collect_sources(
@@ -115,3 +122,41 @@ def test_readme_reports_removal_candidate_rules(
     assert "<th>Removal Candidate</th>" in readme
     assert "<td>51</td><td>No</td>" in readme
     assert "<strong>Yes</strong> — 1 unique domain; unchanged 30 days" in readme
+
+
+def test_readme_escapes_configuration_values(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Configuration values cannot break generated HTML attributes or elements."""
+    monkeypatch.chdir(tmp_path)
+    Path("README.md").write_text(
+        "Header\n<!-- STATS_START -->old<!-- STATS_END -->\n"
+        "<!-- ACKNOWLEDGMENTS_START -->old<!-- ACKNOWLEDGMENTS_END -->\n"
+    )
+    source = SourceConfig(
+        name='<script>alert("x")</script>',
+        url="https://example.com/?a=1&b=2",
+        maintainer_name="Name <unsafe>",
+        maintainer_url="https://example.com/?a=1&b=2",
+        maintainer_description="Description <unsafe> & more",
+    )
+
+    update_readme(
+        [source],
+        {source.name: 1},
+        1,
+        1,
+        ContributionStats(
+            contrib_all={source.name: 1},
+            contrib_general={source.name: 1},
+        ),
+        datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
+        {},
+    )
+
+    readme = Path("README.md").read_text()
+    assert "<script>" not in readme
+    assert "&lt;script&gt;" in readme
+    assert 'href="https://example.com/?a=1&amp;b=2"' in readme
+    assert "Description &lt;unsafe&gt; &amp; more" in readme

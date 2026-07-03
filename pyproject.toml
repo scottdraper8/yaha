@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = [ "hatchling" ]
+requires = [ "hatchling==1.30.1" ]
 
 [project]
 name = "yaha"
@@ -19,7 +19,7 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
 ]
-dependencies = [ "curl-cffi>=0.14,<0.15" ]
+dependencies = [ "curl-cffi==0.15" ]
 urls.Homepage = "https://github.com/scottdraper8/yaha"
 urls.Issues = "https://github.com/scottdraper8/yaha/issues"
 urls.Repository = "https://github.com/scottdraper8/yaha"
@@ -27,15 +27,19 @@ scripts.yaha = "src.cli:main"
 
 [dependency-groups]
 dev = [
-  "mypy>=1.19.1,<2",
-  "pre-commit>=4.4,<5",
-  "pytest>=9.0.2,<10",
-  "pytest-cov>=7,<8",
-  "ruff>=0.14.14,<0.15",
+  "mypy==1.20.2",
+  "pre-commit==4.6",
+  "pytest==9.1.1",
+  "pytest-cov==7.1",
+  "ruff==0.14.14",
 ]
+audit = [ "pip-audit==2.10.1" ]
 
 [tool.hatch.build.targets.wheel]
 packages = [ "src" ]
+
+[tool.uv]
+required-version = "==0.11.26"
 
 [tool.ruff]
 target-version = "py311"
