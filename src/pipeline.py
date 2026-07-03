@@ -1,9 +1,4 @@
-"""Domain processing pipeline for YAHA.
-
-Zero-knowledge module for domain deduplication and contribution statistics.
-No knowledge of blocklists, NSFW categories, or source purposes.
-Operates on generic "sources" with "categories".
-"""
+"""Streaming domain deduplication and contribution analysis."""
 
 from __future__ import annotations
 
@@ -20,8 +15,6 @@ class PipelineFiles:
 
     annotated: Path
     sorted: Path
-    domains_all: Path
-    domains_general: Path
 
     @classmethod
     def create(cls, base_dir: Path = Path()) -> PipelineFiles:
@@ -29,16 +22,12 @@ class PipelineFiles:
         return cls(
             annotated=base_dir / "temp_annotated.txt",
             sorted=base_dir / "temp_sorted.txt",
-            domains_all=base_dir / "temp_domains_all.txt",
-            domains_general=base_dir / "temp_domains_general.txt",
         )
 
     def cleanup(self) -> None:
         """Remove all temporary files."""
         self.annotated.unlink(missing_ok=True)
         self.sorted.unlink(missing_ok=True)
-        self.domains_all.unlink(missing_ok=True)
-        self.domains_general.unlink(missing_ok=True)
 
 
 @dataclass
@@ -59,8 +48,8 @@ def process_annotated_pipeline(
     Process annotated stream through sort and streaming group-by pipeline.
 
     Single external sort by domain, then streaming group-by that:
-    - Writes deduplicated domains to ALL output (sorted)
-    - Writes deduplicated domains to GENERAL output (sorted, derived in same pass)
+    - Counts deduplicated domains for all configured sources
+    - Counts deduplicated domains for general sources
     - Computes per-source contribution counters for both aggregates
     - Filters out whitelisted domains
 
@@ -104,11 +93,7 @@ def process_annotated_pipeline(
     contrib_all: dict[str, int] = dict.fromkeys(id_to_name.values(), 0)
     contrib_general: dict[str, int] = dict.fromkeys(id_to_name.values(), 0)
 
-    with (
-        pipeline.sorted.open("r", encoding="utf-8") as f_in,
-        pipeline.domains_all.open("w", encoding="utf-8") as f_all,
-        pipeline.domains_general.open("w", encoding="utf-8") as f_gen,
-    ):
+    with pipeline.sorted.open("r", encoding="utf-8") as f_in:
         current_domain: str | None = None
         sources_all: set[int] = set()
         sources_general: set[int] = set()
@@ -123,14 +108,11 @@ def process_annotated_pipeline(
                 whitelisted_count += 1
                 return
 
-            f_all.write(f"{current_domain}\n")
             all_count += 1
 
             if sources_general:
-                f_gen.write(f"{current_domain}\n")
                 general_count += 1
 
-            # Contribution: domains appearing in exactly one source
             if len(sources_all) == 1:
                 only_source_id = next(iter(sources_all))
                 contrib_all[id_to_name[only_source_id]] += 1

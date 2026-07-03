@@ -19,7 +19,6 @@ class SourceConfig:
     name: str
     url: str
     nsfw: bool = False
-    preserve: bool = False
     maintainer_name: str | None = None
     maintainer_url: str | None = None
     maintainer_description: str | None = None
@@ -31,26 +30,10 @@ class SourceConfig:
             name=data["name"],
             url=data["url"],
             nsfw=data.get("nsfw", False),
-            preserve=data.get("preserve", False),
             maintainer_name=data.get("maintainer_name"),
             maintainer_url=data.get("maintainer_url"),
             maintainer_description=data.get("maintainer_description"),
         )
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for JSON serialization."""
-        result: dict[str, Any] = {"name": self.name, "url": self.url}
-        if self.nsfw:
-            result["nsfw"] = self.nsfw
-        if self.preserve:
-            result["preserve"] = self.preserve
-        if self.maintainer_name:
-            result["maintainer_name"] = self.maintainer_name
-        if self.maintainer_url:
-            result["maintainer_url"] = self.maintainer_url
-        if self.maintainer_description:
-            result["maintainer_description"] = self.maintainer_description
-        return result
 
 
 @dataclass
@@ -111,14 +94,6 @@ def load_sources(config_path: Path = Path("blocklists.json")) -> list[SourceConf
         sources.append(SourceConfig.from_dict(entry))
 
     return sources
-
-
-def save_sources(sources: list[SourceConfig], config_path: Path = Path("blocklists.json")) -> None:
-    """Save source configurations to JSON file."""
-    data = [source.to_dict() for source in sources]
-    with config_path.open("w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
-        f.write("\n")
 
 
 def load_whitelist(whitelist_path: Path = Path("whitelist.txt")) -> Whitelist:

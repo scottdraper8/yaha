@@ -7,32 +7,17 @@ from pathlib import Path
 
 import pytest
 
-from src.config import SourceConfig, Whitelist, load_sources, load_whitelist, save_sources
+from src.config import SourceConfig, Whitelist, load_sources, load_whitelist
 
 
 class TestSourceConfig:
     """Tests for SourceConfig dataclass serialization."""
-
-    def test_roundtrip(self) -> None:
-        """Test from_dict and to_dict preserve data."""
-        data = {
-            "name": "Test List",
-            "url": "https://example.com/list.txt",
-            "nsfw": True,
-            "preserve": True,
-        }
-        config = SourceConfig.from_dict(data)
-        result = config.to_dict()
-
-        assert result["name"] == "Test List"
-        assert result["nsfw"] is True
 
     def test_defaults(self) -> None:
         """Test default values for optional fields."""
         config = SourceConfig.from_dict({"name": "Test", "url": "https://x.com"})
 
         assert config.nsfw is False
-        assert config.preserve is False
         assert config.maintainer_name is None
 
 
@@ -51,9 +36,9 @@ class TestWhitelist:
         whitelist = Whitelist(exact=set(), wildcards=["*.example.com"])
 
         assert whitelist.is_whitelisted("foo.example.com") is True
-        assert whitelist.is_whitelisted("example.com") is True  # Base domain matches
+        assert whitelist.is_whitelisted("example.com") is True
         assert whitelist.is_whitelisted("notexample.com") is False
-        assert whitelist.is_whitelisted("fooexample.com") is False  # Not a subdomain
+        assert whitelist.is_whitelisted("fooexample.com") is False
 
     def test_empty_whitelist(self) -> None:
         """Test empty whitelist matches nothing."""
@@ -89,28 +74,10 @@ class TestLoadSources:
     def test_missing_required_field_raises(self, tmp_path: Path) -> None:
         """Test missing required field raises ValueError."""
         config_file = tmp_path / "blocklists.json"
-        config_file.write_text('[{"name": "Test"}]')  # Missing 'url'
+        config_file.write_text('[{"name": "Test"}]')
 
         with pytest.raises(ValueError, match="missing 'name' or 'url'"):
             load_sources(config_file)
-
-
-class TestSaveSources:
-    """Tests for save_sources."""
-
-    def test_roundtrip(self, tmp_path: Path) -> None:
-        """Test save and reload preserves data."""
-        config_file = tmp_path / "blocklists.json"
-        sources = [
-            SourceConfig(name="List 1", url="https://example.com/1.txt"),
-            SourceConfig(name="List 2", url="https://example.com/2.txt", nsfw=True),
-        ]
-
-        save_sources(sources, config_file)
-        loaded = load_sources(config_file)
-
-        assert len(loaded) == 2
-        assert loaded[1].nsfw is True
 
 
 class TestLoadWhitelist:

@@ -1,8 +1,4 @@
-"""HTTP fetching for YAHA.
-
-Minimal-knowledge module for fetching URLs and computing content hashes.
-Generic URL fetching - no knowledge of blocklists or their purpose.
-"""
+"""HTTP source retrieval and content hashing."""
 
 from __future__ import annotations
 

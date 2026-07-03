@@ -1,10 +1,10 @@
 """CLI orchestrator for YAHA.
 
 Main entry point that knows all business logic:
-- Aggregating "blocklists"
-- "NSFW" category handling
-- Business rules (180-day purge, weekly compile)
-- Output files: hosts, hosts_nsfw
+- Fetching and normalizing configured host lists
+- General and NSFW category analysis
+- Deduplication, provenance, whitelist, and removal-candidate analysis
+- README analytics generation
 """
 
 from __future__ import annotations
@@ -15,66 +15,46 @@ from datetime import UTC, datetime
 import json
 from pathlib import Path
 import sys
-from typing import Any
 
-from src.cache_manager import (
-    cache_exists,
-    get_cache_stats,
-    load_from_cache,
-    save_to_cache,
-    validate_cache,
-)
-from src.config import SourceConfig, load_sources, load_whitelist, save_sources
+from src.config import SourceConfig, load_sources, load_whitelist
 from src.domain_processor import extract_domains_from_lines
 from src.fetcher import FetchError, fetch_url_with_hash
-from src.hosts_generator import generate_hosts_file_from_file
 from src.pipeline import ContributionStats, PipelineFiles, process_annotated_pipeline
 from src.state_manager import (
-    check_stale_sources,
+    AnalysisState,
+    get_stale_sources,
     load_state,
     save_state,
-    should_force_compile,
+    should_force_analysis,
     update_source_state,
 )
 
 MAX_WORKERS = 5
+LOW_CONTRIBUTION_THRESHOLD = 50
 
 
-def build_header(
-    title: str,
-    total_domains: int,
-    sources: list[SourceConfig],
-    source_stats: dict[str, int],
-    timestamp: str,
+def get_candidate_reasons(
+    unique_contribution: int,
+    days_since_change: int | None,
 ) -> list[str]:
-    """Build header lines for hosts file with YAHA-specific formatting."""
-    header = [
-        "# YAHA - Yet Another Host Aggregator",
-        f"# Compiled blocklist from multiple sources ({title})",
-        "#",
-        f"# Last Updated: {timestamp}",
-        f"# Total Domains: {total_domains:,}",
-        "#",
-        "# Source Lists:",
-    ]
-
-    for source in sources:
-        count = source_stats.get(source.name, 0)
-        nsfw_flag = " [NSFW]" if source.nsfw else ""
-        header.append(f"#   - {source.name}{nsfw_flag}: {count:,} domains")
-        header.append(f"#     {source.url}")
-
-    header.extend(["#", "# Usage: Add this URL to your blocklist subscriptions", "#"])
-    return header
+    """Return the rules that make a source a removal candidate."""
+    reasons = []
+    if unique_contribution <= LOW_CONTRIBUTION_THRESHOLD:
+        reasons.append(
+            f"{unique_contribution:,} unique domain{'s' if unique_contribution != 1 else ''}"
+        )
+    if days_since_change is not None:
+        reasons.append(f"unchanged {days_since_change} days")
+    return reasons
 
 
-def collect_sources_with_hashes(
+def collect_sources(
     sources: list[SourceConfig],
     output_file: Path,
-    state: Any,
-) -> tuple[dict[str, int], dict[int, str], dict[str, str], bool]:
+    state: AnalysisState,
+) -> tuple[dict[str, int], dict[int, str], bool, list[str]]:
     """
-    Fetch all sources, compute hashes, check for changes, and save to cache.
+    Fetch all sources, normalize domains, and update change-tracking state.
 
     Format per line: domain<TAB>source_id<TAB>is_general
     where is_general is 1 for non-NSFW sources and 0 otherwise.
@@ -82,8 +62,8 @@ def collect_sources_with_hashes(
     source_stats: dict[str, int] = {}
     name_to_id = {s.name: idx for idx, s in enumerate(sources)}
     id_to_name = {idx: s.name for idx, s in enumerate(sources)}
-    new_hashes: dict[str, str] = {}
     any_changed = False
+    failed_sources: list[str] = []
     current_time = datetime.now(UTC)
 
     with (
@@ -102,13 +82,8 @@ def collect_sources_with_hashes(
             print(f"Fetching {source.name}{nsfw_tag}...")
 
             try:
-                content_hash, raw_content, lines = future.result()
-                new_hashes[source.name] = content_hash
+                content_hash, _raw_content, lines = future.result()
 
-                # Save fetched content to cache for compile-only mode
-                save_to_cache(source.name, source_id, raw_content, source.url, content_hash)
-
-                # Check if hash changed and update state
                 changed = update_source_state(state, source, content_hash, current_time)
                 if changed:
                     print("  Content CHANGED (hash mismatch)")
@@ -116,7 +91,6 @@ def collect_sources_with_hashes(
                 else:
                     print("  Content unchanged (hash match)")
 
-                # Write domains to annotated stream
                 count = 0
                 for domain in extract_domains_from_lines(lines):
                     f_out.write(f"{domain}\t{source_id}\t{is_general_flag}\n")
@@ -128,52 +102,9 @@ def collect_sources_with_hashes(
             except FetchError as e:
                 print(f"  Error: {e}", file=sys.stderr)
                 source_stats[source.name] = 0
+                failed_sources.append(source.name)
 
-    return source_stats, id_to_name, new_hashes, any_changed
-
-
-def collect_sources_from_cache(
-    sources: list[SourceConfig],
-    output_file: Path,
-) -> tuple[dict[str, int], dict[int, str]]:
-    """
-    Load sources from cache and process domains.
-
-    Format per line: domain<TAB>source_id<TAB>is_general
-    where is_general is 1 for non-NSFW sources and 0 otherwise.
-
-    Sources not found in cache are skipped with a warning.
-    """
-    source_stats: dict[str, int] = {}
-    name_to_id = {s.name: idx for idx, s in enumerate(sources)}
-    id_to_name = {idx: s.name for idx, s in enumerate(sources)}
-
-    with output_file.open("w", encoding="utf-8") as f_out:
-        for source in sources:
-            is_nsfw = source.nsfw
-            is_general_flag = 0 if is_nsfw else 1
-            source_id = name_to_id[source.name]
-            nsfw_tag = "  [NSFW]" if is_nsfw else ""
-
-            print(f"Loading from cache: {source.name}{nsfw_tag}...")
-
-            try:
-                lines = load_from_cache(source.name)
-
-                # Write domains to annotated stream
-                count = 0
-                for domain in extract_domains_from_lines(lines):
-                    f_out.write(f"{domain}\t{source_id}\t{is_general_flag}\n")
-                    count += 1
-
-                source_stats[source.name] = count
-                print(f"  Found {count:,} domains")
-
-            except (FileNotFoundError, KeyError):
-                print("  Skipped (not in cache)", file=sys.stderr)
-                source_stats[source.name] = 0
-
-    return source_stats, id_to_name
+    return source_stats, id_to_name, any_changed, failed_sources
 
 
 def update_readme(
@@ -183,8 +114,9 @@ def update_readme(
     total_all: int,
     contribution_stats: ContributionStats,
     last_update: str,
+    stale_sources: dict[str, int],
 ) -> None:
-    """Update README with dual statistics tables (general and NSFW)."""
+    """Update README with source statistics and removal-candidate analysis."""
 
     def build_table(source_list: list[SourceConfig], contributions: dict[str, int]) -> str:
         """Build HTML table for source statistics."""
@@ -196,9 +128,18 @@ def update_readme(
         for source in sorted_sources:
             total = source_stats.get(source.name, 0)
             unique = contributions.get(source.name, 0)
+            candidate_reasons = get_candidate_reasons(
+                unique,
+                stale_sources.get(source.name),
+            )
+            candidate = (
+                f"<strong>Yes</strong> — {'; '.join(candidate_reasons)}"
+                if candidate_reasons
+                else "No"
+            )
             rows.append(
                 f"<tr><td><a href='{source.url}'>{source.name}</a></td>"
-                f"<td>{total:,}</td><td>{unique:,}</td></tr>"
+                f"<td>{total:,}</td><td>{unique:,}</td><td>{candidate}</td></tr>"
             )
 
         return f"""<table align="center">
@@ -208,6 +149,7 @@ def update_readme(
 <th>Source List</th>
 <th>Total Domains</th>
 <th>Unique Contribution</th>
+<th>Removal Candidate</th>
 </tr>
 </thead>
 <tbody>
@@ -253,19 +195,21 @@ def update_readme(
 ![Total Domains](https://img.shields.io/badge/Total_Domains_(with_NSFW)-{total_all:,}-ff79c6?style=for-the-badge&labelColor=6272a4)
 ![Last Updated](https://img.shields.io/badge/Last_Updated-{last_update_badge}-50fa7b?style=for-the-badge&labelColor=6272a4)
 
-### General Protection Lists
+### General Host Lists
 
 {general_table}
 
-### NSFW Blocking Lists
+### NSFW Host Lists
 
 {nsfw_table}
 
 </div>
 
 > [!NOTE]
-> **Unique Contribution** shows how many domains would disappear if that source were removed.
-> Sources with low unique counts (~50 or less) provide minimal value.
+> **Unique Contribution** is the number of domains that would disappear if a
+> source were removed. A source is a **Removal Candidate** when it contributes
+> 50 or fewer unique domains or has no observed content change for 30 days.
+> Sources are never removed automatically.
 
 <!-- STATS_END -->"""
 
@@ -273,7 +217,6 @@ def update_readme(
         content[:stats_start] + stats_section + content[stats_end + len("<!-- STATS_END -->") :]
     )
 
-    # Update acknowledgments section
     ack_start = new_content.find("<!-- ACKNOWLEDGMENTS_START -->")
     ack_end = new_content.find("<!-- ACKNOWLEDGMENTS_END -->")
 
@@ -294,7 +237,7 @@ Thanks to the maintainers of all source blocklists:
         )
 
     readme_path.write_text(new_content, encoding="utf-8")
-    print("Updated README.md with dual statistics tables")
+    print("Updated README.md with host-list analytics")
 
 
 def build_acknowledgments(sources: list[SourceConfig]) -> str:
@@ -302,171 +245,112 @@ def build_acknowledgments(sources: list[SourceConfig]) -> str:
     maintainers: dict[str, tuple[str, str]] = {}
 
     for source in sources:
-        has_maintainer = (
-            source.maintainer_name and source.maintainer_url and source.maintainer_description
-        )
-        if (
-            has_maintainer
-            and source.maintainer_name is not None
-            and source.maintainer_name not in maintainers
-        ):
-            # mypy doesn't understand the narrowing from has_maintainer check
-            assert source.maintainer_url is not None
-            assert source.maintainer_description is not None
-            maintainers[source.maintainer_name] = (
-                source.maintainer_url,
-                source.maintainer_description,
+        if source.maintainer_name and source.maintainer_url and source.maintainer_description:
+            maintainers.setdefault(
+                source.maintainer_name,
+                (source.maintainer_url, source.maintainer_description),
             )
 
     sorted_maintainers = sorted(maintainers.items())
 
     lines = []
-    for name, (url, desc) in sorted_maintainers:
-        lines.append(f"- [{name}]({url}) - {desc}")
+    for name, (url, description) in sorted_maintainers:
+        lines.append(f"- [{name}]({url}) - {description}")
 
     return "\n".join(lines) if lines else "No maintainer information available."
 
 
 def main() -> int:
     """
-    Execute compilation with hash-based change detection.
+    Fetch configured sources and update host-list analytics.
 
     Returns:
         Exit code: 0 on success, 1 on error
     """
     parser = argparse.ArgumentParser(
-        description="YAHA - Yet Another Host Aggregator",
+        description="YAHA - Host-List Analyzer",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
         "--force",
         action="store_true",
-        help="Force recompilation even if no changes detected",
-    )
-    parser.add_argument(
-        "--compile-only",
-        action="store_true",
-        help="Compile from cached sources without fetching (requires previous run)",
+        help="Force analysis even if no source changes are detected",
     )
     args = parser.parse_args()
 
-    # Validate mutually exclusive options
-    if args.compile_only and args.force:
-        print("Error: --compile-only and --force cannot be used together", file=sys.stderr)
-        return 1
-
-    print("YAHA - Yet Another Host Aggregator")
+    print("YAHA - Host-List Analyzer")
     print("=" * 50)
 
     current_time = datetime.now(UTC)
 
     try:
-        # Step 1: Load state
         print("\nLoading state from previous run...")
         state = load_state()
-        print(f"  Previous compilation: {state.last_compilation or 'Never'}")
-        print(f"  Total compilations: {state.compilation_count}")
-        print(f"  Skipped compilations: {state.skipped_compilations}")
+        print(f"  Previous analysis: {state.last_analysis or 'Never'}")
+        print(f"  Total analyses: {state.analysis_count}")
+        print(f"  Skipped analyses: {state.skipped_analyses}")
 
-        # Step 2: Load source configuration
         print("\nLoading source configuration...")
         sources = load_sources()
         print(f"Loaded {len(sources)} source(s)")
 
-        # Step 3: Handle compile-only mode
-        if args.compile_only:
-            print("\nCompile-only mode: using cached sources...")
-
-            # Validate cache exists
-            if not cache_exists():
-                print("Error: Cache not found. Cannot use --compile-only.", file=sys.stderr)
-                print("Run 'yaha' without flags first to populate the cache.", file=sys.stderr)
-                return 1
-
-            # Check which sources are cached and filter out missing ones
-            source_names = [s.name for s in sources]
-            is_valid, missing = validate_cache(source_names)
-            if not is_valid:
-                print(
-                    f"Warning: Cache missing entries for {len(missing)} sources (will skip):",
-                    file=sys.stderr,
-                )
-                for name in missing[:5]:
-                    print(f"  - {name}", file=sys.stderr)
-                if len(missing) > 5:
-                    print(f"  ... and {len(missing) - 5} more", file=sys.stderr)
-
-                # Filter out missing sources
-                sources = [s for s in sources if s.name not in missing]
-                print(f"\nProceeding with {len(sources)} cached sources (skipped {len(missing)})")
-
-            cache_stats = get_cache_stats()
-            print(f"  Cache contains {cache_stats['source_count']} total entries")
-            print(f"  Cached at: {cache_stats['cached_at']}")
-
-            # Skip stale source check in compile-only mode
-            purge_occurred = False
+        print("\nChecking source health...")
+        stale_sources = get_stale_sources(state, sources, current_time)
+        if stale_sources:
+            print(f"  {len(stale_sources)} source(s) meet the staleness criterion")
         else:
-            # Normal mode: check for stale sources
-            print("\nChecking for stale sources...")
-            sources, purge_occurred = check_stale_sources(state, sources, current_time)
+            print("  No stale sources found")
 
-            if purge_occurred:
-                print("  Saving updated blocklists.json...")
-                save_sources(sources)
-                print(f"  Active sources after purge: {len(sources)}")
-            else:
-                print("  No stale sources found")
-
-        # Step 4: Load whitelist
         print("\nLoading whitelist...")
         whitelist = load_whitelist()
         total_wl = len(whitelist.exact) + len(whitelist.wildcards)
         if total_wl > 0:
             print(f"  Loaded {len(whitelist.exact)} exact, {len(whitelist.wildcards)} wildcard(s)")
 
-        # Step 5: Load sources (from cache or network)
-        blocklists_dir = Path("blocklists")
-        blocklists_dir.mkdir(exist_ok=True)
-
         pipeline = PipelineFiles.create()
-
-        if args.compile_only:
-            print("\nLoading sources from cache...")
-            source_stats, id_to_name = collect_sources_from_cache(sources, pipeline.annotated)
-            # Always compile in compile-only mode
-            print("\nCompile-only mode: proceeding with compilation...")
-        else:
-            print("\nFetching sources and computing hashes...")
-            source_stats, id_to_name, _new_hashes, any_changed = collect_sources_with_hashes(
-                sources, pipeline.annotated, state
+        print("\nFetching sources and computing hashes...")
+        source_stats, id_to_name, any_changed, failed_sources = collect_sources(
+            sources,
+            pipeline.annotated,
+            state,
+        )
+        if failed_sources:
+            pipeline.cleanup()
+            names = ", ".join(sorted(failed_sources))
+            print(
+                f"\nError: analysis aborted because source fetches failed: {names}",
+                file=sys.stderr,
             )
+            return 1
+        stale_sources = get_stale_sources(state, sources, current_time)
+        newly_stale = [
+            name
+            for name in stale_sources
+            if not state.sources[name].metadata.get("stale_candidate_reported", False)
+        ]
 
-            # Decide whether to compile
-            force_compile = args.force or should_force_compile(state, current_time)
+        force_analysis = (
+            args.force or should_force_analysis(state, current_time) or bool(newly_stale)
+        )
 
-            if not any_changed and not force_compile and not purge_occurred:
-                print("\nNo changes detected - skipping compilation")
-                print(f"Last compilation was at {state.last_compilation}")
-                state.skipped_compilations += 1
-                pipeline.cleanup()
-                save_state(state)
-                return 0
+        if not any_changed and not force_analysis:
+            print("\nNo changes detected - skipping analysis")
+            print(f"Last analysis was at {state.last_analysis}")
+            state.skipped_analyses += 1
+            pipeline.cleanup()
+            save_state(state)
+            return 0
 
-            if args.force:
-                print("\nWARNING: Forcing compilation (--force flag)")
-            elif force_compile:
-                print("\nWARNING: Forcing compilation (weekly schedule)")
-            elif purge_occurred:
-                print("\nWARNING: Compiling due to purged sources")
-            else:
-                print("\nChanges detected - proceeding with compilation")
+        if args.force:
+            print("\nForcing analysis (--force)")
+        elif newly_stale:
+            print("\nRunning analysis for newly stale source(s)")
+        elif force_analysis:
+            print("\nRunning scheduled weekly analysis")
+        else:
+            print("\nSource changes detected - running analysis")
 
-        # Step 6: Run full compilation pipeline
-        hosts_path = blocklists_dir / "hosts"
-        hosts_nsfw_path = blocklists_dir / "hosts_nsfw"
-
-        print("\nProcessing through sort and group-by pipeline...")
+        print("\nAnalyzing deduplication and provenance...")
         all_count, general_count, contribution_stats, whitelisted_count = (
             process_annotated_pipeline(pipeline, id_to_name, whitelist)
         )
@@ -476,21 +360,7 @@ def main() -> int:
         if whitelisted_count > 0:
             print(f"  Whitelisted domains (filtered): {whitelisted_count:,}")
 
-        print("\nGenerating hosts files...")
         timestamp = current_time.strftime("%Y-%m-%d %H:%M:%S UTC")
-
-        general_sources = [s for s in sources if not s.nsfw]
-
-        general_header = build_header(
-            "GENERAL - No NSFW", general_count, general_sources, source_stats, timestamp
-        )
-        nsfw_header = build_header("INCLUDING NSFW", all_count, sources, source_stats, timestamp)
-
-        generate_hosts_file_from_file(pipeline.domains_general, hosts_path, general_header)
-        generate_hosts_file_from_file(pipeline.domains_all, hosts_nsfw_path, nsfw_header)
-
-        print(f"  Wrote {general_count:,} domains to blocklists/hosts")
-        print(f"  Wrote {all_count:,} domains to blocklists/hosts_nsfw")
 
         print("\nUpdating README...")
         update_readme(
@@ -500,18 +370,43 @@ def main() -> int:
             all_count,
             contribution_stats,
             timestamp,
+            stale_sources,
         )
+        for source in sources:
+            source_state = state.sources.get(source.name)
+            if source_state is None:
+                continue
+            contributions = (
+                contribution_stats.contrib_all
+                if source.nsfw
+                else contribution_stats.contrib_general
+            )
+            unique = contributions.get(source.name, 0)
+            candidate_reasons = get_candidate_reasons(
+                unique,
+                stale_sources.get(source.name),
+            )
+            source_state.metadata.update(
+                {
+                    "domain_count": source_stats.get(source.name, 0),
+                    "unique_contribution": unique,
+                    "removal_candidate": bool(candidate_reasons),
+                    "candidate_reasons": candidate_reasons,
+                }
+            )
+            if source.name in stale_sources:
+                source_state.metadata["stale_candidate_reported"] = True
+            else:
+                source_state.metadata.pop("stale_candidate_reported", None)
 
         print("\nCleaning up temporary files...")
         pipeline.cleanup()
 
-        # Update compilation stats
-        state.last_compilation = current_time.isoformat()
-        state.compilation_count += 1
+        state.last_analysis = current_time.isoformat()
+        state.analysis_count += 1
 
-        print("\nCompilation complete")
+        print("\nAnalysis complete")
 
-        # Save state
         save_state(state)
 
         return 0

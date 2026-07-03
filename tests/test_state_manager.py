@@ -1,20 +1,19 @@
 """Tests for src/state_manager.py.
 
-Tests state persistence, staleness detection, and force compile logic.
+Tests state persistence, staleness detection, and analysis scheduling.
 """
 
 from datetime import UTC, datetime, timedelta
-import json
 from pathlib import Path
 
 from src.config import SourceConfig
 from src.state_manager import (
-    CompilationState,
+    AnalysisState,
     SourceState,
-    check_stale_sources,
+    get_stale_sources,
     load_state,
     save_state,
-    should_force_compile,
+    should_force_analysis,
     update_source_state,
 )
 
@@ -25,7 +24,7 @@ class TestStatePersistence:
     def test_save_and_load_roundtrip(self, tmp_path: Path) -> None:
         """Test state survives save/load cycle."""
         state_file = tmp_path / "state.json"
-        state = CompilationState(
+        state = AnalysisState(
             sources={
                 "Source1": SourceState(
                     url="https://example.com",
@@ -36,21 +35,21 @@ class TestStatePersistence:
                     change_count=3,
                 )
             },
-            compilation_count=50,
+            analysis_count=50,
         )
 
         save_state(state, state_file)
         loaded = load_state(state_file)
 
         assert loaded.sources["Source1"].content_hash == "abc123"
-        assert loaded.compilation_count == 50
+        assert loaded.analysis_count == 50
 
     def test_missing_file_returns_empty(self, tmp_path: Path) -> None:
         """Test missing state file returns empty state."""
         state = load_state(tmp_path / "nonexistent.json")
 
         assert state.sources == {}
-        assert state.compilation_count == 0
+        assert state.analysis_count == 0
 
     def test_corrupt_json_returns_empty(self, tmp_path: Path) -> None:
         """Test corrupt JSON returns empty state (graceful recovery)."""
@@ -61,39 +60,14 @@ class TestStatePersistence:
 
         assert state.sources == {}
 
-    def test_legacy_format_migration(self, tmp_path: Path) -> None:
-        """Test loading legacy 'lists' format migrates to 'sources'."""
-        state_file = tmp_path / "state.json"
-        state_file.write_text(
-            json.dumps(
-                {
-                    "lists": {  # Old key
-                        "Source1": {
-                            "url": "https://example.com",
-                            "content_hash": "abc",
-                            "last_fetch_date": "2026-01-26",
-                            "last_changed_date": "2026-01-26",
-                            "fetch_count": 1,
-                            "change_count": 1,
-                        }
-                    },
-                    "compilation_count": 5,
-                }
-            )
-        )
 
-        state = load_state(state_file)
-
-        assert "Source1" in state.sources
-
-
-class TestCheckStaleSources:
+class TestGetStaleSources:
     """Tests for staleness detection logic."""
 
-    def test_fresh_source_not_purged(self) -> None:
-        """Test recently-updated sources are kept."""
+    def test_fresh_source_not_flagged(self) -> None:
+        """Test recently-updated sources are not flagged."""
         now = datetime.now(UTC)
-        state = CompilationState(
+        state = AnalysisState(
             sources={
                 "Fresh": SourceState(
                     url="https://example.com",
@@ -107,16 +81,15 @@ class TestCheckStaleSources:
         )
         sources = [SourceConfig(name="Fresh", url="https://example.com")]
 
-        active, purged = check_stale_sources(state, sources, now, quiet=True)
+        stale = get_stale_sources(state, sources, now)
 
-        assert len(active) == 1
-        assert purged is False
+        assert stale == {}
 
-    def test_stale_source_purged(self) -> None:
-        """Test sources without updates for 180+ days are purged."""
+    def test_stale_source_flagged_without_mutation(self) -> None:
+        """Test sources unchanged for 30 days are flagged but retained."""
         now = datetime.now(UTC)
-        old_date = (now - timedelta(days=200)).isoformat()
-        state = CompilationState(
+        old_date = (now - timedelta(days=30)).isoformat()
+        state = AnalysisState(
             sources={
                 "Stale": SourceState(
                     url="https://example.com",
@@ -130,17 +103,16 @@ class TestCheckStaleSources:
         )
         sources = [SourceConfig(name="Stale", url="https://example.com")]
 
-        active, purged = check_stale_sources(state, sources, now, quiet=True)
+        stale = get_stale_sources(state, sources, now)
 
-        assert len(active) == 0
-        assert purged is True
-        assert "Stale" not in state.sources
+        assert stale == {"Stale": 30}
+        assert "Stale" in state.sources
 
-    def test_preserved_source_never_purged(self) -> None:
-        """Test sources with preserve=True are never purged."""
+    def test_source_just_under_threshold_not_flagged(self) -> None:
+        """Test a source just under the threshold is not flagged."""
         now = datetime.now(UTC)
-        old_date = (now - timedelta(days=200)).isoformat()
-        state = CompilationState(
+        old_date = (now - timedelta(days=29, hours=23)).isoformat()
+        state = AnalysisState(
             sources={
                 "Preserved": SourceState(
                     url="https://example.com",
@@ -152,39 +124,38 @@ class TestCheckStaleSources:
                 )
             }
         )
-        sources = [SourceConfig(name="Preserved", url="https://example.com", preserve=True)]
+        sources = [SourceConfig(name="Preserved", url="https://example.com")]
 
-        active, purged = check_stale_sources(state, sources, now, quiet=True)
+        stale = get_stale_sources(state, sources, now)
 
-        assert len(active) == 1
-        assert purged is False
+        assert stale == {}
 
 
-class TestShouldForceCompile:
-    """Tests for force compile decision logic."""
+class TestShouldForceAnalysis:
+    """Tests for forced analysis scheduling."""
 
     def test_first_run_forces(self) -> None:
-        """Test first run (no prior compilation) forces compile."""
-        state = CompilationState()
+        """Test first run without prior analysis forces execution."""
+        state = AnalysisState()
         now = datetime.now(UTC)
 
-        assert should_force_compile(state, now) is True
+        assert should_force_analysis(state, now) is True
 
-    def test_recent_compile_skips(self) -> None:
-        """Test recent compilation doesn't force."""
+    def test_recent_analysis_skips(self) -> None:
+        """Test recent analysis doesn't force."""
         now = datetime.now(UTC)
         recent = (now - timedelta(hours=1)).isoformat()
-        state = CompilationState(last_compilation=recent)
+        state = AnalysisState(last_analysis=recent)
 
-        assert should_force_compile(state, now) is False
+        assert should_force_analysis(state, now) is False
 
-    def test_old_compile_forces(self) -> None:
-        """Test >7 days since last compile forces."""
+    def test_old_analysis_forces(self) -> None:
+        """Test more than seven days since analysis forces a new run."""
         now = datetime.now(UTC)
         old = (now - timedelta(days=8)).isoformat()
-        state = CompilationState(last_compilation=old)
+        state = AnalysisState(last_analysis=old)
 
-        assert should_force_compile(state, now) is True
+        assert should_force_analysis(state, now) is True
 
 
 class TestUpdateSourceState:
@@ -192,7 +163,7 @@ class TestUpdateSourceState:
 
     def test_new_source_marks_changed(self) -> None:
         """Test new source is marked as changed."""
-        state = CompilationState()
+        state = AnalysisState()
         source = SourceConfig(name="New", url="https://example.com")
         now = datetime.now(UTC)
 
@@ -205,7 +176,7 @@ class TestUpdateSourceState:
     def test_unchanged_hash_not_changed(self) -> None:
         """Test same hash doesn't mark changed."""
         now = datetime.now(UTC)
-        state = CompilationState(
+        state = AnalysisState(
             sources={
                 "Existing": SourceState(
                     url="https://example.com",
@@ -223,12 +194,12 @@ class TestUpdateSourceState:
 
         assert changed is False
         assert state.sources["Existing"].fetch_count == 6
-        assert state.sources["Existing"].change_count == 2  # Unchanged
+        assert state.sources["Existing"].change_count == 2
 
     def test_different_hash_marks_changed(self) -> None:
         """Test different hash marks changed."""
         now = datetime.now(UTC)
-        state = CompilationState(
+        state = AnalysisState(
             sources={
                 "Existing": SourceState(
                     url="https://example.com",

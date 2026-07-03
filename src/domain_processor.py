@@ -1,8 +1,4 @@
-"""Domain processing for YAHA.
-
-Zero-knowledge module for domain validation and extraction.
-No knowledge of blocklists, NSFW categories, or source purposes.
-"""
+"""Domain validation and extraction for supported host-list formats."""
 
 from __future__ import annotations
 
@@ -35,7 +31,6 @@ def is_valid_domain(domain: str) -> bool:
     return True
 
 
-# Domain validation regex per RFC 1035
 _DOMAIN_REGEX = (
     r"[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?"
     r"(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*"
