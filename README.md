@@ -209,61 +209,13 @@ uv run pre-commit run --all-files
 
 ### Configuration
 
-Blocklists are configured in `blocklists.json`.
+Blocklists are configured in `blocklists.json`. Each entry requires a `name` and
+`url`; optional fields are `nsfw`, `maintainer_name`, `maintainer_url`, and
+`maintainer_description`.
 
-**blocklists.json Format:**
-
-```json
-[
-  {
-    "name": "List Name",
-    "url": "https://example.com/blocklist.txt",
-    "nsfw": false,
-    "maintainer_name": "Maintainer Name",
-    "maintainer_url": "https://github.com/maintainer",
-    "maintainer_description": "Summary used in acknowledgments"
-  }
-]
-```
-
-Each entry requires:
-
-- `name`: Display name for the blocklist
-- `url`: Direct URL to the blocklist file
-
-Optional fields:
-
-- `nsfw`: Set to `true` to report the source in the separate NSFW category
-- `maintainer_name`: Maintainer's display name for acknowledgments section
-- `maintainer_url`: URL to maintainer's repository or website
-- `maintainer_description`: Maintainer summary used in acknowledgments
-
-Maintainer fields are grouped and deduplicated in the acknowledgments section.
-
-#### Whitelist Configuration
-
-Domains can be excluded from blocklists using `whitelist.txt`.
-
-**whitelist.txt Format:**
-
-```text
-# One domain per line
-# Lines starting with # are comments
-
-# Exact domain match
-example.com
-
-# Wildcard match (all subdomains)
-*.aurorastore.org
-```
-
-**Supported patterns:**
-
-- **Exact match**: `example.com` - matches only that domain
-- **Wildcard match**: `*.example.com` - matches the domain and all
-  subdomains
-
-Whitelisted domains are filtered during the deduplication pass.
+Domains can be excluded using `whitelist.txt`. Supports Adblock Plus exception
+rules (`@@||domain^`, matches the domain and all subdomains) as well as plain
+domains and `*.domain` wildcards.
 
 ### Performance Tuning
 
