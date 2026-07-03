@@ -1,11 +1,5 @@
 repos:
-  # 1. Poetry dependency management and version syncing
-  - repo: https://github.com/floatingpurr/sync_with_poetry
-    rev: "1.2.1"
-    hooks:
-      - id: sync_with_poetry
-
-  # 2. Core pre-commit utilities - basic checks and file formatting
+  # 1. Core pre-commit utilities - basic checks and file formatting
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -27,7 +21,7 @@ repos:
       - id: end-of-file-fixer
       - id: mixed-line-ending
 
-  # 3. Code linting, formatting, and type checking
+  # 2. Code linting, formatting, and type checking
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.14
     hooks:
@@ -40,7 +34,7 @@ repos:
     hooks:
       - id: mypy
         files: ^src/.*\.py$
-        additional_dependencies: [curl-cffi>=0.14.0]
+        additional_dependencies: ["curl-cffi>=0.14,<0.15"]
 
   - repo: https://github.com/tox-dev/pyproject-fmt
     rev: v2.11.1

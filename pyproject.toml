@@ -1,11 +1,11 @@
 [build-system]
-build-backend = "poetry.core.masonry.api"
-requires = [ "poetry-core>=2" ]
+build-backend = "hatchling.build"
+requires = [ "hatchling" ]
 
 [project]
 name = "yaha"
 version = "2.0.0"
-description = "Yet Another Host Aggregator - Blocklist compiler & deduplicator"
+description = "Host-list provenance analyzer and whitelist workspace"
 readme = "README.md"
 keywords = [ "adblock", "blocklist", "dns", "hosts", "privacy" ]
 
@@ -19,24 +19,23 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
 ]
+dependencies = [ "curl-cffi>=0.14,<0.15" ]
 urls.Homepage = "https://github.com/scottdraper8/yaha"
 urls.Issues = "https://github.com/scottdraper8/yaha/issues"
 urls.Repository = "https://github.com/scottdraper8/yaha"
 scripts.yaha = "src.cli:main"
 
-[tool.poetry]
-package-mode = true
-packages = [ { include = "src" } ]
+[dependency-groups]
+dev = [
+  "mypy>=1.19.1,<2",
+  "pre-commit>=4.4,<5",
+  "pytest>=9.0.2,<10",
+  "pytest-cov>=7,<8",
+  "ruff>=0.14.14,<0.15",
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-curl-cffi = "^0.14.0"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^9.0.2"
-pytest-cov = "^7.0.0"
-mypy = "^1.19.1"
-ruff = "^0.14.14"
+[tool.hatch.build.targets.wheel]
+packages = [ "src" ]
 
 [tool.ruff]
 target-version = "py311"
