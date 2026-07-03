@@ -10,9 +10,10 @@
 
 ---
 
-Personal host-file analyzer and whitelist workspace. YAHA aggregates configured
-lists for normalization, deduplication, provenance analysis, and maintenance of
-devices running tools such as Pi-hole and TrackerControl.
+Host-file analyzer and whitelist workspace. Aggregates configured
+lists for normalization, deduplication, and provenance analysis.
+
+*Used for personal pi-hole management.*
 
 ---
 
