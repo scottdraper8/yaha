@@ -33,10 +33,10 @@
   },
   {
     "name": "HaGeZi DGA 30 Days",
-    "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/dga30.txt",
+    "url": "https://raw.githubusercontent.com/hagezi/nrd/main/adblock/dga30.txt",
     "nsfw": false,
     "maintainer_name": "HaGeZi",
-    "maintainer_url": "https://github.com/hagezi/dns-blocklists",
+    "maintainer_url": "https://github.com/hagezi/nrd",
     "maintainer_description": "Multi-pro, Threat Intelligence, DGA, and NSFW lists"
   },
   {
@@ -88,14 +88,6 @@
     "maintainer_description": "SNAFU"
   },
   {
-    "name": "Anudeep's Blacklist",
-    "url": "https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt",
-    "nsfw": false,
-    "maintainer_name": "Anudeep ND",
-    "maintainer_url": "https://github.com/anudeepND/blacklist",
-    "maintainer_description": "Adservers blacklist"
-  },
-  {
     "name": "First-Party Trackers",
     "url": "https://hostfiles.frogeye.fr/firstparty-trackers-hosts.txt",
     "nsfw": false,
@@ -134,14 +126,6 @@
     "maintainer_name": "Firebog",
     "maintainer_url": "https://firebog.net/",
     "maintainer_description": "RPiList Phishing/Malware, Prigent collections, AdGuard DNS, EasyPrivacy"
-  },
-  {
-    "name": "Spam404",
-    "url": "https://raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt",
-    "nsfw": false,
-    "maintainer_name": "Spam404",
-    "maintainer_url": "https://github.com/Spam404/lists",
-    "maintainer_description": "Main blacklist"
   },
   {
     "name": "KADhosts",

@@ -2,231 +2,328 @@
   "sources": {
     "Steven Black's Unified Hosts": {
       "url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
-      "content_hash": "2bce882b42fc651a6bb2d24e6ad3bcba70300bc49f706763bede5f5b9d921bac",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-27T02:00:19.205544+00:00",
-      "fetch_count": 305,
-      "change_count": 39,
-      "metadata": {}
+      "content_hash": "0111458b7cd8a097018b6a3fef8fbefe0517910cb92a8d54730f01c9a9444c3c",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-07-03T14:39:39.530429+00:00",
+      "fetch_count": 308,
+      "change_count": 40,
+      "metadata": {
+        "domain_count": 82927,
+        "unique_contribution": 19945,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "HaGeZi Multi-pro Extended": {
       "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt",
-      "content_hash": "33e63a31e74e8eb7eb25f6a13ebb29846e0d9cc3d6429653176eb3329f32b473",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-28T13:10:13.021683+00:00",
-      "fetch_count": 305,
-      "change_count": 280,
-      "metadata": {}
+      "content_hash": "b3c0ce8509a4901209febc60e640ab9292759374b4052fa82ffaaa94f6c3d3c7",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-07-03T14:39:39.530429+00:00",
+      "fetch_count": 308,
+      "change_count": 282,
+      "metadata": {
+        "domain_count": 511403,
+        "unique_contribution": 326396,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "HaGeZi NSFW": {
       "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/nsfw.txt",
-      "content_hash": "dac84b1396719fbd6be678f563442eb5b99e0a0bee9835542ac22ab7563d72bc",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-28T13:10:13.021683+00:00",
-      "fetch_count": 305,
-      "change_count": 273,
-      "metadata": {}
+      "content_hash": "b54a01509961e1dc193d8c3f59634771176fe9b97ea9d410b7d38faf2d558d78",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-07-03T14:39:39.530429+00:00",
+      "fetch_count": 308,
+      "change_count": 275,
+      "metadata": {
+        "domain_count": 105402,
+        "unique_contribution": 45994,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "RPiList Phishing": {
       "url": "https://v.firebog.net/hosts/RPiList-Phishing.txt",
-      "content_hash": "56d89bf2048920fdab7b28815df62f9b1a639d9220ce4197cfa003c3408198ba",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-27T02:00:19.205544+00:00",
-      "fetch_count": 305,
-      "change_count": 42,
-      "metadata": {}
+      "content_hash": "8542ada0587e40319455941da0ab54c9c43ac042c3275ea81e45950a1fd7556d",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-07-03T14:39:39.530429+00:00",
+      "fetch_count": 308,
+      "change_count": 43,
+      "metadata": {
+        "domain_count": 146215,
+        "unique_contribution": 12905,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "SNAFU": {
       "url": "https://raw.githubusercontent.com/RooneyMcNibNug/pihole-stuff/master/SNAFU.txt",
       "content_hash": "f7f90d561d26d60554a43252dc6b5547ca06bdd37d71babf6ddea22835587bc0",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
       "last_changed_date": "2026-06-26T02:06:11.171205+00:00",
-      "fetch_count": 305,
+      "fetch_count": 308,
       "change_count": 42,
-      "metadata": {}
-    },
-    "Anudeep's Blacklist": {
-      "url": "https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt",
-      "content_hash": "4cbe4ca57d726b9964f5b782cc7c211243cd7f7fa4b5947af3a2b3ec3560477e",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-01-27T03:44:48.141900+00:00",
-      "fetch_count": 305,
-      "change_count": 1,
-      "metadata": {}
+      "metadata": {
+        "domain_count": 74766,
+        "unique_contribution": 70792,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "RPiList Malware": {
       "url": "https://v.firebog.net/hosts/RPiList-Malware.txt",
-      "content_hash": "2538fd190f0434935c7a35197658d62cd5e1862aee2d8658ffd2974bcb01e76c",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-27T02:00:19.205544+00:00",
-      "fetch_count": 305,
-      "change_count": 41,
-      "metadata": {}
+      "content_hash": "a5afabfc8158befbff7220d98d780a377967ec47bfefb03fe1ac7a5080401b58",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-07-03T14:39:39.530429+00:00",
+      "fetch_count": 308,
+      "change_count": 42,
+      "metadata": {
+        "domain_count": 1039235,
+        "unique_contribution": 826904,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "AdGuard DNS Filter": {
       "url": "https://v.firebog.net/hosts/AdguardDNS.txt",
-      "content_hash": "2e1577dc4ad84f689261fa9f1592a9e10db89f72de6c0779fe04c18d0bdf0c94",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-27T02:00:19.205544+00:00",
-      "fetch_count": 305,
-      "change_count": 66,
-      "metadata": {}
+      "content_hash": "0e649aac8b2939437f8ba05d9e8b0b83f0559644f1cb59285fea5c97cc8dbe82",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-07-03T14:39:39.530429+00:00",
+      "fetch_count": 308,
+      "change_count": 67,
+      "metadata": {
+        "domain_count": 152286,
+        "unique_contribution": 55319,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "First-Party Trackers": {
       "url": "https://hostfiles.frogeye.fr/firstparty-trackers-hosts.txt",
-      "content_hash": "7b1004298291877f3a8417f44a9885b2e4c085ae6c5a1185c45f7a948adbc04f",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-22T02:35:32.022219+00:00",
-      "fetch_count": 302,
-      "change_count": 21,
-      "metadata": {}
+      "content_hash": "47fd13edd24f0d5f9dafb0599b3b20d810d25069bfa8ffd9c8ec161dabace109",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-06-28T23:43:41.513663+00:00",
+      "fetch_count": 305,
+      "change_count": 22,
+      "metadata": {
+        "domain_count": 14999,
+        "unique_contribution": 11432,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "EasyPrivacy": {
       "url": "https://v.firebog.net/hosts/Easyprivacy.txt",
-      "content_hash": "bdd65c563346c345403a0f772a6898dbe28c250fcfd80242b57cf662b73cc2da",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-27T02:00:19.205544+00:00",
-      "fetch_count": 304,
-      "change_count": 68,
-      "metadata": {}
+      "content_hash": "60d0a2d3a5cbbfb527e1e6375cbcb4a448d604af54c3d9ae25681c9d972a486f",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-07-03T14:39:39.530429+00:00",
+      "fetch_count": 307,
+      "change_count": 69,
+      "metadata": {
+        "domain_count": 42586,
+        "unique_contribution": 13146,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "Prigent Crypto": {
       "url": "https://v.firebog.net/hosts/Prigent-Crypto.txt",
-      "content_hash": "9baebc58d093f83b94b41e1913c4768314e2f69b00e338863f5f583f77184130",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-27T02:00:19.205544+00:00",
-      "fetch_count": 305,
-      "change_count": 66,
-      "metadata": {}
-    },
-    "Spam404": {
-      "url": "https://raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt",
-      "content_hash": "99c65c4a7bcbab03cb82b1068d39a3e43dd65b51ce7b089929261a818b520960",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-01-27T03:44:48.141900+00:00",
-      "fetch_count": 305,
-      "change_count": 1,
-      "metadata": {}
+      "content_hash": "4d1c92f36f603306ae0b60f40724809211ff98ee185506dd2b806b715fba4b98",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-07-03T14:39:39.530429+00:00",
+      "fetch_count": 308,
+      "change_count": 67,
+      "metadata": {
+        "domain_count": 11491,
+        "unique_contribution": 10883,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "KADhosts": {
       "url": "https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts.txt",
-      "content_hash": "cf82a92d49a31a7a57f95fd18509d8f1b5d823822f5954cbdd0b380bb05f1150",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-28T13:10:13.021683+00:00",
-      "fetch_count": 305,
-      "change_count": 303,
-      "metadata": {}
+      "content_hash": "a95f106d2b834ac9661de622890c8936bbe453bdbb21931ac87fe8127fb96cd9",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-07-03T14:39:39.530429+00:00",
+      "fetch_count": 308,
+      "change_count": 305,
+      "metadata": {
+        "domain_count": 47890,
+        "unique_contribution": 2678,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "hostsVN": {
       "url": "https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts",
-      "content_hash": "fa38bf552fc61c547c821068f83a943021f948bf8fba56349d59778f94707631",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-26T13:57:17.420327+00:00",
-      "fetch_count": 305,
-      "change_count": 42,
-      "metadata": {}
+      "content_hash": "4ddad3646f5dc04d7afb54a173a101064a82985ff4eba10f0b349c61979e2197",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-07-03T14:39:39.530429+00:00",
+      "fetch_count": 308,
+      "change_count": 43,
+      "metadata": {
+        "domain_count": 18108,
+        "unique_contribution": 4209,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "DandelionSprout Anti-Malware": {
       "url": "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareHosts.txt",
-      "content_hash": "65b58e029ed1a542ed602255f03902b80d6bf88a5992b8be5259febfecb445c6",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-03T02:36:28.869710+00:00",
-      "fetch_count": 305,
-      "change_count": 13,
-      "metadata": {}
+      "content_hash": "97f8893702ad7714a366ff75b7a042ccf3627fd79add2b4906bf92522eaa39c6",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-07-03T14:39:39.530429+00:00",
+      "fetch_count": 308,
+      "change_count": 14,
+      "metadata": {
+        "domain_count": 12329,
+        "unique_contribution": 2059,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "Matomo Referrer Spam": {
       "url": "https://raw.githubusercontent.com/matomo-org/referrer-spam-blacklist/master/spammers.txt",
-      "content_hash": "7205cb37bc24e2320b6853d4cbe916885fcc413f616d6d89eaf381415f0d8adb",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-26T02:06:11.171205+00:00",
-      "fetch_count": 305,
-      "change_count": 8,
-      "metadata": {}
+      "content_hash": "90593728db4d26dbe3e6af4e0ceed6934b09c51c4902f69a055e01414d2a5bc7",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-07-03T14:39:39.530429+00:00",
+      "fetch_count": 308,
+      "change_count": 9,
+      "metadata": {
+        "domain_count": 2343,
+        "unique_contribution": 998,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "Prigent Ads": {
       "url": "https://v.firebog.net/hosts/Prigent-Ads.txt",
-      "content_hash": "c41bfff01789a982a21cec74ba329aeb37adbb86ade4e34b8e2f74e49aef1b79",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-27T02:00:19.205544+00:00",
-      "fetch_count": 305,
-      "change_count": 66,
-      "metadata": {}
+      "content_hash": "c9708115a873c03b717122bb39a56cbd26022e6cb532588efc183379a09ff256",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-07-03T14:39:39.530429+00:00",
+      "fetch_count": 308,
+      "change_count": 67,
+      "metadata": {
+        "domain_count": 4270,
+        "unique_contribution": 1516,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "Stalkerware Indicators": {
       "url": "https://raw.githubusercontent.com/AssoEchap/stalkerware-indicators/master/generated/hosts",
       "content_hash": "6e8928e0dc37b9fcf9c16ceda3c55d717dfc816b1d491becbf58cb71a5b734c8",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
       "last_changed_date": "2026-06-22T02:35:32.022219+00:00",
-      "fetch_count": 305,
+      "fetch_count": 308,
       "change_count": 3,
-      "metadata": {}
+      "metadata": {
+        "domain_count": 925,
+        "unique_contribution": 388,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "Cyber Threat Coalition Malware": {
       "url": "https://lists.cyberhost.uk/malware.txt",
-      "content_hash": "1ee38e4a4a117984ddaf256f519f1cb7eac7694ac3b83ebc86bb495af37ad27b",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-28T13:10:13.021683+00:00",
-      "fetch_count": 297,
-      "change_count": 216,
-      "metadata": {}
+      "content_hash": "ee873512e8b52bc7daa605c21063ff781c1bc598f2c43acb16a30287d4a16d71",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-07-03T14:40:55.278033+00:00",
+      "fetch_count": 300,
+      "change_count": 219,
+      "metadata": {
+        "domain_count": 50355,
+        "unique_contribution": 31226,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "Phishing Hosts": {
       "url": "https://malware-filter.gitlab.io/malware-filter/phishing-filter-hosts.txt",
-      "content_hash": "82dc3eb34bf83da62cdf80d89b65fefba69a794e25bd93a4b84b54bf09a8d451",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-28T13:10:13.021683+00:00",
-      "fetch_count": 305,
-      "change_count": 258,
-      "metadata": {}
-    },
-    "HaGeZi DGA 30 Days": {
-      "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/dga30.txt",
-      "content_hash": "03db72954117e93c3185a88d2f4882947e4db9f0028209163f21e0f301894d42",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-28T13:10:13.021683+00:00",
-      "fetch_count": 305,
-      "change_count": 154,
-      "metadata": {}
+      "content_hash": "887242c37ff9dcba5605c77dbde3409efc9002960887b88acccc5c27df6fb825",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-07-03T14:39:39.530429+00:00",
+      "fetch_count": 308,
+      "change_count": 259,
+      "metadata": {
+        "domain_count": 32211,
+        "unique_contribution": 1169,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "HaGeZi Threat Intelligence": {
       "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt",
-      "content_hash": "1a8692d5a46bf260671afc969d4dde8df3430746965acf2681e2724af6091729",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-28T13:10:13.021683+00:00",
-      "fetch_count": 305,
-      "change_count": 279,
-      "metadata": {}
+      "content_hash": "8d8a1cc0412fa8cd710861ad51b0587444be3077e9971088ecfe6f7d956ea077",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-07-03T14:39:39.530429+00:00",
+      "fetch_count": 308,
+      "change_count": 281,
+      "metadata": {
+        "domain_count": 1824248,
+        "unique_contribution": 1423995,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "Prigent Adult": {
       "url": "https://v.firebog.net/hosts/Prigent-Adult.txt",
-      "content_hash": "2fa56ca8c96bdb8cdc0bf799dc9c4a9c6ee73e87991db22f28ea0c610cc4b464",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-28T02:10:54.001887+00:00",
-      "fetch_count": 304,
-      "change_count": 45,
-      "metadata": {}
+      "content_hash": "ee8fefbb615d2f287eda7707e4e50518dc562c6ae30427287117463ef4fc4b2a",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-07-03T14:39:39.530429+00:00",
+      "fetch_count": 307,
+      "change_count": 46,
+      "metadata": {
+        "domain_count": 4590338,
+        "unique_contribution": 4431020,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "OISD Big List": {
       "url": "https://big.oisd.nl",
-      "content_hash": "d4a53e4e0dac689fcd875b93098852bfd257fb5a566b4f378f2465d7ec968f4c",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-28T13:10:13.021683+00:00",
-      "fetch_count": 299,
-      "change_count": 298,
-      "metadata": {}
+      "content_hash": "b646f10378ced17b97ea4c89ab9eb41890fb8e77bf489eb93c615deb2a9fa1d1",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-07-03T14:39:39.530429+00:00",
+      "fetch_count": 302,
+      "change_count": 300,
+      "metadata": {
+        "domain_count": 326002,
+        "unique_contribution": 61488,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     },
     "OISD NSFW": {
       "url": "https://nsfw.oisd.nl",
-      "content_hash": "460de8c100c76b7587211576abea5be4b55f475a319082fb33560cffa06bd59e",
-      "last_fetch_date": "2026-06-28T13:10:13.021683+00:00",
-      "last_changed_date": "2026-06-28T13:10:13.021683+00:00",
-      "fetch_count": 299,
-      "change_count": 298,
-      "metadata": {}
+      "content_hash": "67db539582c48fcf2fa9f791d83a22413e53973446c5403d2da733080a25e5be",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-07-03T14:39:39.530429+00:00",
+      "fetch_count": 302,
+      "change_count": 300,
+      "metadata": {
+        "domain_count": 364750,
+        "unique_contribution": 195240,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
+    },
+    "HaGeZi DGA 30 Days": {
+      "url": "https://raw.githubusercontent.com/hagezi/nrd/main/adblock/dga30.txt",
+      "content_hash": "be4cb1367a8225e12f6e0fa8dd36d3f72dcf8739410a085609fef2d8e78f9bd9",
+      "last_fetch_date": "2026-07-03T14:40:55.278033+00:00",
+      "last_changed_date": "2026-07-03T14:40:55.278033+00:00",
+      "fetch_count": 1,
+      "change_count": 1,
+      "metadata": {
+        "domain_count": 2380363,
+        "unique_contribution": 2334445,
+        "removal_candidate": false,
+        "candidate_reasons": []
+      }
     }
   },
-  "last_compilation": "2026-06-28T13:10:13.021219+00:00",
-  "compilation_count": 305,
-  "skipped_compilations": 1
+  "last_analysis": "2026-07-03T14:40:55.277545+00:00",
+  "analysis_count": 308,
+  "skipped_analyses": 1
 }
