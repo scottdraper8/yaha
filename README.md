@@ -120,10 +120,6 @@ analysis state; it does not generate or publish a combined host list.
 
 ---
 
-> [!IMPORTANT]
-> The section below is ***ONLY*** for developers who want to
-> customize or contribute to YAHA.
-
 ## Local Development Setup
 
 **Prerequisites:**
