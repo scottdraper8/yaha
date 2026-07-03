@@ -159,9 +159,29 @@ jobs:
               --body "Automated weekly host-list analytics and state update."
           fi
           echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Dispatch required CI for generated branch
+      - name: Start required PR CI
         if: steps.update.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run ci.yml --ref automation/host-list-analysis
+          HEAD_SHA: ${{ steps.update.outputs.head_sha }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          # GITHUB_TOKEN-created PR events are recorded as action_required to
+          # prevent recursive workflow execution. Rerunning that exact run is
+          # safe here: this trusted job has already constrained the PR to the
+          # two generated files, and the rerun becomes the required PR check.
+          for attempt in $(seq 1 15); do
+            run_id=$(gh api \
+              "repos/$REPOSITORY/actions/workflows/ci.yml/runs?branch=automation%2Fhost-list-analysis&event=pull_request&per_page=20" \
+              --jq ".workflow_runs[] | select(.head_sha == \"$HEAD_SHA\" and .conclusion == \"action_required\") | .id" \
+              | head -n 1)
+            if [ -n "$run_id" ]; then
+              gh run rerun "$run_id" --repo "$REPOSITORY"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Required pull_request CI run was not created" >&2
+          exit 1
