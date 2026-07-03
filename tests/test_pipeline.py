@@ -6,6 +6,8 @@ Whitelist tests are in test_config.py (single source of truth).
 
 from pathlib import Path
 
+import pytest
+
 from src.config import Whitelist
 from src.pipeline import PipelineFiles, process_annotated_pipeline
 
@@ -28,6 +30,32 @@ class TestPipelineFiles:
         """Test cleanup doesn't raise if files don't exist."""
         files = PipelineFiles.create(tmp_path)
         files.cleanup()
+
+    def test_create_uses_unique_private_directories(self, tmp_path: Path) -> None:
+        """Concurrent runs cannot share predictable temporary files."""
+        first = PipelineFiles.create(tmp_path)
+        second = PipelineFiles.create(tmp_path)
+        try:
+            assert first.root != second.root
+            assert first.root.stat().st_mode & 0o777 == 0o700
+            assert first.annotated.parent == first.root
+            assert second.annotated.parent == second.root
+        finally:
+            first.cleanup()
+            second.cleanup()
+
+    def test_context_manager_cleans_up_after_failure(self, tmp_path: Path) -> None:
+        """Temporary files are removed even when analysis raises."""
+        root: Path
+        with (
+            pytest.raises(RuntimeError, match="failure"),
+            PipelineFiles.create(tmp_path) as files,
+        ):
+            root = files.root
+            files.annotated.write_text("partial")
+            raise RuntimeError("failure")
+
+        assert not root.exists()
 
 
 class TestProcessAnnotatedPipeline:

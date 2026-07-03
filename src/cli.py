@@ -12,13 +12,14 @@ from __future__ import annotations
 import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import UTC, datetime
+import html
 import json
 from pathlib import Path
 import sys
 
 from src.config import SourceConfig, load_sources, load_whitelist
 from src.domain_processor import extract_domains_from_lines
-from src.fetcher import FetchError, fetch_url_with_hash
+from src.fetcher import DownloadBudget, FetchError, fetch_url_with_hash
 from src.pipeline import ContributionStats, PipelineFiles, process_annotated_pipeline
 from src.state_manager import (
     AnalysisState,
@@ -31,6 +32,8 @@ from src.state_manager import (
 
 MAX_WORKERS = 5
 LOW_CONTRIBUTION_THRESHOLD = 50
+MAX_DOMAINS_PER_SOURCE = 10_000_000
+MAX_TOTAL_DOMAINS = 30_000_000
 
 
 def get_candidate_reasons(
@@ -65,12 +68,22 @@ def collect_sources(
     any_changed = False
     failed_sources: list[str] = []
     current_time = datetime.now(UTC)
+    download_budget = DownloadBudget()
+    total_domains = 0
 
     with (
         output_file.open("w", encoding="utf-8") as f_out,
         ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor,
     ):
-        future_to_source = {executor.submit(fetch_url_with_hash, s.url): s for s in sources}
+        future_to_source = {
+            executor.submit(
+                fetch_url_with_hash,
+                source.url,
+                output_file.parent / f"source-{source_id}.list",
+                budget=download_budget,
+            ): source
+            for source_id, source in enumerate(sources)
+        }
 
         for future in as_completed(future_to_source):
             source = future_to_source[future]
@@ -82,9 +95,9 @@ def collect_sources(
             print(f"Fetching {source.name}{nsfw_tag}...")
 
             try:
-                content_hash, _raw_content, lines = future.result()
+                fetched = future.result()
 
-                changed = update_source_state(state, source, content_hash, current_time)
+                changed = update_source_state(state, source, fetched.content_hash, current_time)
                 if changed:
                     print("  Content CHANGED (hash mismatch)")
                     any_changed = True
@@ -92,9 +105,18 @@ def collect_sources(
                     print("  Content unchanged (hash match)")
 
                 count = 0
-                for domain in extract_domains_from_lines(lines):
+                for domain in extract_domains_from_lines(fetched.iter_lines()):
                     f_out.write(f"{domain}\t{source_id}\t{is_general_flag}\n")
                     count += 1
+                    total_domains += 1
+                    if count > MAX_DOMAINS_PER_SOURCE:
+                        raise FetchError(
+                            f"Source {source.url} exceeds {MAX_DOMAINS_PER_SOURCE:,} parsed domains"
+                        )
+                    if total_domains > MAX_TOTAL_DOMAINS:
+                        raise FetchError(
+                            f"Analysis exceeds {MAX_TOTAL_DOMAINS:,} total parsed domains"
+                        )
 
                 source_stats[source.name] = count
                 print(f"  Found {count:,} domains")
@@ -137,8 +159,10 @@ def update_readme(
                 if candidate_reasons
                 else "No"
             )
+            source_url = html.escape(source.url, quote=True)
+            source_name = html.escape(source.name, quote=True)
             rows.append(
-                f"<tr><td><a href='{source.url}'>{source.name}</a></td>"
+                f'<tr><td><a href="{source_url}">{source_name}</a></td>'
                 f"<td>{total:,}</td><td>{unique:,}</td><td>{candidate}</td></tr>"
             )
 
@@ -255,7 +279,10 @@ def build_acknowledgments(sources: list[SourceConfig]) -> str:
 
     lines = []
     for name, (url, description) in sorted_maintainers:
-        lines.append(f"- [{name}]({url}) - {description}")
+        safe_name = html.escape(name, quote=True)
+        safe_url = html.escape(url, quote=True)
+        safe_description = html.escape(description, quote=True)
+        lines.append(f'- <a href="{safe_url}">{safe_name}</a> - {safe_description}')
 
     return "\n".join(lines) if lines else "No maintainer information available."
 
@@ -307,53 +334,51 @@ def main() -> int:
         if total_wl > 0:
             print(f"  Loaded {len(whitelist.exact)} exact, {len(whitelist.wildcards)} wildcard(s)")
 
-        pipeline = PipelineFiles.create()
-        print("\nFetching sources and computing hashes...")
-        source_stats, id_to_name, any_changed, failed_sources = collect_sources(
-            sources,
-            pipeline.annotated,
-            state,
-        )
-        if failed_sources:
-            pipeline.cleanup()
-            names = ", ".join(sorted(failed_sources))
-            print(
-                f"\nError: analysis aborted because source fetches failed: {names}",
-                file=sys.stderr,
+        with PipelineFiles.create() as pipeline:
+            print("\nFetching sources and computing hashes...")
+            source_stats, id_to_name, any_changed, failed_sources = collect_sources(
+                sources,
+                pipeline.annotated,
+                state,
             )
-            return 1
-        stale_sources = get_stale_sources(state, sources, current_time)
-        newly_stale = [
-            name
-            for name in stale_sources
-            if not state.sources[name].metadata.get("stale_candidate_reported", False)
-        ]
+            if failed_sources:
+                names = ", ".join(sorted(failed_sources))
+                print(
+                    f"\nError: analysis aborted because source fetches failed: {names}",
+                    file=sys.stderr,
+                )
+                return 1
+            stale_sources = get_stale_sources(state, sources, current_time)
+            newly_stale = [
+                name
+                for name in stale_sources
+                if not state.sources[name].metadata.get("stale_candidate_reported", False)
+            ]
 
-        force_analysis = (
-            args.force or should_force_analysis(state, current_time) or bool(newly_stale)
-        )
+            force_analysis = (
+                args.force or should_force_analysis(state, current_time) or bool(newly_stale)
+            )
 
-        if not any_changed and not force_analysis:
-            print("\nNo changes detected - skipping analysis")
-            print(f"Last analysis was at {state.last_analysis}")
-            state.skipped_analyses += 1
-            pipeline.cleanup()
-            save_state(state)
-            return 0
+            if not any_changed and not force_analysis:
+                print("\nNo changes detected - skipping analysis")
+                print(f"Last analysis was at {state.last_analysis}")
+                state.skipped_analyses += 1
+                save_state(state)
+                return 0
 
-        if args.force:
-            print("\nForcing analysis (--force)")
-        elif newly_stale:
-            print("\nRunning analysis for newly stale source(s)")
-        elif force_analysis:
-            print("\nRunning scheduled weekly analysis")
-        else:
-            print("\nSource changes detected - running analysis")
+            if args.force:
+                print("\nForcing analysis (--force)")
+            elif newly_stale:
+                print("\nRunning analysis for newly stale source(s)")
+            elif force_analysis:
+                print("\nRunning scheduled weekly analysis")
+            else:
+                print("\nSource changes detected - running analysis")
 
-        print("\nAnalyzing deduplication and provenance...")
-        all_count, general_count, contribution_stats, whitelisted_count = (
-            process_annotated_pipeline(pipeline, id_to_name, whitelist)
-        )
+            print("\nAnalyzing deduplication and provenance...")
+            all_count, general_count, contribution_stats, whitelisted_count = (
+                process_annotated_pipeline(pipeline, id_to_name, whitelist)
+            )
 
         print(f"\n  Total unique domains (general): {general_count:,}")
         print(f"  Total unique domains (all with NSFW): {all_count:,}")
@@ -399,8 +424,7 @@ def main() -> int:
             else:
                 source_state.metadata.pop("stale_candidate_reported", None)
 
-        print("\nCleaning up temporary files...")
-        pipeline.cleanup()
+        print("\nTemporary files cleaned up")
 
         state.last_analysis = current_time.isoformat()
         state.analysis_count += 1

@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+import shutil
 import subprocess
+import tempfile
+from types import TracebackType
 
 from src.config import Whitelist
 
@@ -13,21 +16,35 @@ from src.config import Whitelist
 class PipelineFiles:
     """Temporary file paths for annotated domain processing pipeline."""
 
+    root: Path
     annotated: Path
     sorted: Path
 
     @classmethod
-    def create(cls, base_dir: Path = Path()) -> PipelineFiles:
-        """Create temp file paths for the processing pipeline."""
+    def create(cls, base_dir: Path | None = None) -> PipelineFiles:
+        """Create a private, unique temporary directory for one pipeline run."""
+        root = Path(tempfile.mkdtemp(prefix="yaha-", dir=base_dir))
+        root.chmod(0o700)
         return cls(
-            annotated=base_dir / "temp_annotated.txt",
-            sorted=base_dir / "temp_sorted.txt",
+            root=root,
+            annotated=root / "annotated.tsv",
+            sorted=root / "sorted.tsv",
         )
 
     def cleanup(self) -> None:
-        """Remove all temporary files."""
-        self.annotated.unlink(missing_ok=True)
-        self.sorted.unlink(missing_ok=True)
+        """Remove the complete private pipeline directory."""
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def __enter__(self) -> PipelineFiles:
+        return self
+
+    def __exit__(
+        self,
+        _exc_type: type[BaseException] | None,
+        _exc_value: BaseException | None,
+        _traceback: TracebackType | None,
+    ) -> None:
+        self.cleanup()
 
 
 @dataclass

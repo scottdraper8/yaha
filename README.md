@@ -205,13 +205,23 @@ uv run mypy src/
 
 # Run all pre-commit hooks
 uv run pre-commit run --all-files
+
+# Audit the hash-locked dependency set
+audit_file=$(mktemp)
+uv export --locked --all-groups --no-emit-project \
+  --format requirements.txt --output-file "$audit_file"
+uv run --group audit pip-audit --requirement "$audit_file" \
+  --require-hashes --disable-pip --strict
+rm -f "$audit_file"
 ```
 
 ### Configuration
 
 Blocklists are configured in `blocklists.json`. Each entry requires a `name` and
 `url`; optional fields are `nsfw`, `maintainer_name`, `maintainer_url`, and
-`maintainer_description`.
+`maintainer_description`. Source and maintainer URLs must use public HTTPS
+destinations without embedded credentials, fragments, or nonstandard ports.
+Source names and URLs must be unique.
 
 Domains can be excluded using `whitelist.txt`. Supports Adblock Plus exception
 rules (`@@||domain^`, matches the domain and all subdomains) as well as plain
@@ -222,11 +232,18 @@ domains and `*.domain` wildcards.
 In `src/cli.py`, adjust:
 
 - `MAX_WORKERS = 5`: Maximum concurrent source fetches
+- `MAX_DOMAINS_PER_SOURCE = 10_000_000`: Per-source parsed-domain limit
+- `MAX_TOTAL_DOMAINS = 30_000_000`: Aggregate parsed-domain limit
 
 In `src/fetcher.py`, adjust:
 
-- `REQUEST_TIMEOUT = 90`: HTTP request timeout per attempt
+- `CONNECT_TIMEOUT_SECONDS = 10`: Connection timeout per attempt
+- `READ_TIMEOUT_SECONDS = 90`: Read timeout per attempt
 - `MAX_FETCH_ATTEMPTS = 3`: Requests made before a source is reported unavailable
+- `MAX_SOURCE_BYTES = 512 MiB`: Maximum decoded body size for one source
+- `MAX_TOTAL_DOWNLOAD_BYTES = 2 GiB`: Shared download budget for one analysis
+- `MAX_LINE_BYTES = 4 KiB`: Maximum input line length
+- `MAX_LINES_PER_SOURCE = 10_000_000`: Per-source input-line limit
 
 In `src/state_manager.py`:
 
@@ -238,6 +255,18 @@ Sources are never removed automatically.
 > [!WARNING]
 > If you add many sources or experience rate limiting, reduce
 > `MAX_WORKERS` to control concurrency.
+
+## Security
+
+Dependencies, development tools, and CI runtimes are pinned, while `uv.lock`
+records artifact hashes. Dependabot is configured to open security updates but
+not routine version-update pull requests. GitHub Actions and pre-commit hooks
+use immutable commit SHAs.
+
+Remote lists are treated as untrusted input. Downloads are streamed with byte,
+line, redirect, destination, timeout, and aggregate limits. Generated analytics
+are published through a reviewable pull request rather than pushed directly to
+`main`.
 
 ## Acknowledgments
 
