@@ -1,9 +1,40 @@
 # Yaha Security Audit
 
 **Date:** July 3, 2026  
-**Status:** Temporary working document  
+**Status:** Remediated
 **Scope:** Application code, dependency management, GitHub repository settings,
 and GitHub Actions
+
+## Remediation Outcome
+
+All actionable findings in this audit were implemented and verified on July 3,
+2026. The remediation was merged through protected pull requests and validated
+on both local and GitHub-hosted runners.
+
+Notable outcomes include:
+
+- `curl-cffi` was upgraded from 0.14.0 to 0.15.0 after the new audit gate found
+  CVE-2026-33752. The application-level redirect and private-address checks
+  remain in place as defense in depth.
+- The complete 94-test suite, Ruff, strict mypy, pre-commit, Gitleaks,
+  `pip-audit`, `actionlint`, and CodeQL pass.
+- A full local analysis completed against all 23 configured sources.
+- Multiple production workflow dispatches verified the read-only analysis job,
+  artifact boundary, write-isolated publisher, repeated PR lifecycle, and
+  required CI integration.
+- GitHub Actions are restricted to GitHub-owned Actions plus the explicitly
+  allowed `astral-sh/setup-uv` and `step-security/harden-runner` publishers.
+  Full commit SHA enforcement is enabled.
+- `main` requires pull requests and the `Validate` check, enforces protection
+  for administrators, and blocks force pushes and deletion.
+- Dependabot alerts and security updates and CodeQL default setup are enabled.
+  Routine dependency update PRs remain disabled.
+
+GitHub left secret-scanning validity checks and non-provider patterns disabled
+when enablement was requested; those account-level features are not available
+for this repository. A public security policy and vulnerability intake channel
+are intentionally omitted because Yaha is maintained primarily for personal
+use.
 
 ## Executive Summary
 
@@ -12,11 +43,12 @@ protection are enabled, dependencies are resolved through `uv.lock`, CI uses
 locked/frozen installs, TLS certificate verification is enabled for source
 downloads, and analysis aborts when a source cannot be fetched.
 
-The largest remaining risk is the scheduled analysis workflow. It executes
-project code and processes untrusted remote content in a job with repository
-write permission, then pushes directly to an unprotected `main` branch. Yaha
-also lacks automated vulnerability updates, required CI checks, response-size
-limits, and enforced commit-SHA pinning for GitHub Actions.
+At audit time, the largest risk was the scheduled analysis workflow. It
+executed project code and processed untrusted remote content in a job with
+repository write permission, then pushed directly to an unprotected `main`
+branch. Yaha also lacked automated vulnerability updates, required CI checks,
+response-size limits, and enforced commit-SHA pinning for GitHub Actions. These
+gaps are now remediated as described above.
 
 The recommended model combines the strongest relevant controls observed in
 ClickEase and dbinfo:
@@ -31,7 +63,7 @@ ClickEase and dbinfo:
   a pull request.
 - Constrain network access and untrusted blocklist input.
 
-## Current Security Controls
+## Audit Baseline
 
 ### Enabled
 
@@ -48,7 +80,7 @@ ClickEase and dbinfo:
 - Pre-commit checks detect private keys, malformed configuration files, merge
   conflicts, and oversized files.
 
-### Missing or Disabled
+### Audit-Time Gaps (Now Remediated)
 
 - Branch protection or repository rulesets for `main`.
 - Required pull requests and required CI status checks.
@@ -355,13 +387,13 @@ omitted because this repository is maintained primarily for personal use.
 
 ## Verification Checklist
 
-- [ ] Pull requests cannot merge until tests, linting, typing, and audits pass.
-- [ ] Direct pushes, force pushes, and deletion of `main` are blocked.
-- [ ] Scheduled analysis cannot access a repository write token.
-- [ ] Generated updates arrive as reviewable pull requests.
-- [ ] Dependabot creates vulnerability PRs but not routine update PRs.
-- [ ] All Actions are full-SHA pinned and repository enforcement is enabled.
-- [ ] All dependency installs use the committed lockfile without re-resolution.
-- [ ] Remote downloads have tested size, time, redirect, and destination limits.
-- [ ] Concurrent runs cannot share or overwrite temporary files.
-- [ ] Gitleaks and GitHub secret scanning protect both local and remote changes.
+- [x] Pull requests cannot merge until tests, linting, typing, and audits pass.
+- [x] Direct pushes, force pushes, and deletion of `main` are blocked.
+- [x] Scheduled analysis cannot access a repository write token.
+- [x] Generated updates arrive as reviewable pull requests.
+- [x] Dependabot creates vulnerability PRs but not routine update PRs.
+- [x] All Actions are full-SHA pinned and repository enforcement is enabled.
+- [x] All dependency installs use the committed lockfile without re-resolution.
+- [x] Remote downloads have tested size, time, redirect, and destination limits.
+- [x] Concurrent runs cannot share or overwrite temporary files.
+- [x] Gitleaks and GitHub secret scanning protect both local and remote changes.
