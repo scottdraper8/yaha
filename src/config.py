@@ -11,6 +11,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from src.domain_processor import ADBLOCK_EXCEPTION_PATTERN
+
 
 @dataclass
 class SourceConfig:
@@ -100,8 +102,9 @@ def load_whitelist(whitelist_path: Path = Path("whitelist.txt")) -> Whitelist:
     """
     Load whitelist from file.
 
-    Format: one domain per line, supports wildcards (*.example.com)
-    Lines starting with # are comments.
+    Supports Adblock Plus exception rules (@@||domain^) and plain domains.
+    @@||domain^ matches the domain and all subdomains.
+    Lines starting with # or ! are treated as comments.
     """
     exact: set[str] = set()
     wildcards: list[str] = []
@@ -112,13 +115,15 @@ def load_whitelist(whitelist_path: Path = Path("whitelist.txt")) -> Whitelist:
     with whitelist_path.open(encoding="utf-8") as f:
         for raw_line in f:
             line = raw_line.strip()
-            if not line or line.startswith("#"):
+            if not line or line.startswith(("#", "!")):
                 continue
 
-            domain = line.lower()
-            if domain.startswith("*."):
-                wildcards.append(domain)
+            abp_match = ADBLOCK_EXCEPTION_PATTERN.match(line)
+            if abp_match:
+                wildcards.append(f"*.{abp_match.group(1).lower()}")
+            elif line.startswith("*."):
+                wildcards.append(line.lower())
             else:
-                exact.add(domain)
+                exact.add(line.lower())
 
     return Whitelist(exact=exact, wildcards=wildcards)

@@ -83,8 +83,8 @@ class TestLoadSources:
 class TestLoadWhitelist:
     """Tests for load_whitelist parsing."""
 
-    def test_load_valid_whitelist(self, tmp_path: Path) -> None:
-        """Test loading whitelist file."""
+    def test_load_plain_domains(self, tmp_path: Path) -> None:
+        """Test loading plain domain and wildcard entries."""
         whitelist_file = tmp_path / "whitelist.txt"
         whitelist_file.write_text("example.com\n*.wildcard.org\n# comment\n")
 
@@ -92,6 +92,38 @@ class TestLoadWhitelist:
 
         assert "example.com" in whitelist.exact
         assert "*.wildcard.org" in whitelist.wildcards
+
+    def test_abp_exception_rules(self, tmp_path: Path) -> None:
+        """Test ABP exception rule format (@@||domain^)."""
+        whitelist_file = tmp_path / "whitelist.txt"
+        whitelist_file.write_text("! comment\n@@||example.com^\n@@||sub.other.org^\n")
+
+        whitelist = load_whitelist(whitelist_file)
+
+        assert "*.example.com" in whitelist.wildcards
+        assert "*.sub.other.org" in whitelist.wildcards
+        assert len(whitelist.exact) == 0
+
+    def test_abp_exception_matches_domain_and_subdomains(self, tmp_path: Path) -> None:
+        """Test that @@||domain^ matches the domain itself and subdomains."""
+        whitelist_file = tmp_path / "whitelist.txt"
+        whitelist_file.write_text("@@||example.com^\n")
+
+        whitelist = load_whitelist(whitelist_file)
+
+        assert whitelist.is_whitelisted("example.com") is True
+        assert whitelist.is_whitelisted("sub.example.com") is True
+        assert whitelist.is_whitelisted("other.com") is False
+
+    def test_skips_bang_comments(self, tmp_path: Path) -> None:
+        """Test that lines starting with ! are treated as comments."""
+        whitelist_file = tmp_path / "whitelist.txt"
+        whitelist_file.write_text("! This is a comment\nexample.com\n")
+
+        whitelist = load_whitelist(whitelist_file)
+
+        assert "example.com" in whitelist.exact
+        assert len(whitelist.wildcards) == 0
 
     def test_missing_file_returns_empty(self, tmp_path: Path) -> None:
         """Test missing whitelist returns empty (graceful)."""
@@ -103,8 +135,9 @@ class TestLoadWhitelist:
     def test_lowercases_domains(self, tmp_path: Path) -> None:
         """Test domains are lowercased."""
         whitelist_file = tmp_path / "whitelist.txt"
-        whitelist_file.write_text("EXAMPLE.COM")
+        whitelist_file.write_text("EXAMPLE.COM\n@@||UPPER.ORG^\n")
 
         whitelist = load_whitelist(whitelist_file)
 
         assert "example.com" in whitelist.exact
+        assert "*.upper.org" in whitelist.wildcards

@@ -39,6 +39,7 @@ _DOMAIN_REGEX = (
 HOSTS_PATTERN = re.compile(rf"^(?:0\.0\.0\.0|127\.0\.0\.1|::1?)[\s\t]+({_DOMAIN_REGEX})")
 RAW_DOMAIN_PATTERN = re.compile(rf"^({_DOMAIN_REGEX})$")
 ADBLOCK_PATTERN = re.compile(rf"^\|\|({_DOMAIN_REGEX})\^")
+ADBLOCK_EXCEPTION_PATTERN = re.compile(rf"^@@\|\|({_DOMAIN_REGEX})\^")
 
 LOCALHOST_PREFIXES = (
     "127.0.0.1 localhost",
