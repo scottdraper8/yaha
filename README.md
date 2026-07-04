@@ -49,7 +49,7 @@ analysis state; it does not generate or publish a combined host list.
 
 ![General Domains](https://img.shields.io/badge/General_Domains-5,805,865-8be9fd?style=for-the-badge&labelColor=6272a4)
 ![Total Domains](https://img.shields.io/badge/Total_Domains_(with_NSFW)-10,648,984-ff79c6?style=for-the-badge&labelColor=6272a4)
-![Last Updated](https://img.shields.io/badge/Last_Updated-2026--07--03_22:10:10_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
+![Last Updated](https://img.shields.io/badge/Last_Updated-2026--07--03_22:25:56_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
 
 ### General Host Lists
 
