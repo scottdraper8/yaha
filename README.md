@@ -5,8 +5,8 @@
 [![Analyze Host Lists](https://img.shields.io/github/actions/workflow/status/scottdraper8/yaha/analyze-host-lists.yml?label=Analyze%20Host%20Lists&logo=github&logoColor=white&color=50fa7b&labelColor=6272a4)](https://github.com/scottdraper8/yaha/actions/workflows/analyze-host-lists.yml)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-bd93f9?logo=python&logoColor=white&labelColor=6272a4)](https://www.python.org/downloads/)
 [![uv](https://img.shields.io/badge/uv-managed-ff79c6?logo=astral&logoColor=white&labelColor=6272a4)](https://docs.astral.sh/uv/)
-[![pre-commit](https://img.shields.io/badge/pre--commit-4.4.0-f1fa8c?logo=pre-commit&logoColor=282a36&labelColor=6272a4)](https://github.com/pre-commit/pre-commit)
-[![curl-cffi](https://img.shields.io/badge/curl--cffi-0.14.0+-8be9fd?logo=curl&logoColor=white&labelColor=6272a4)](https://github.com/yifeikong/curl_cffi)
+[![pre-commit](https://img.shields.io/badge/pre--commit-4.6-f1fa8c?logo=pre-commit&logoColor=282a36&labelColor=6272a4)](https://github.com/pre-commit/pre-commit)
+[![curl-cffi](https://img.shields.io/badge/curl--cffi-0.15-8be9fd?logo=curl&logoColor=white&labelColor=6272a4)](https://github.com/yifeikong/curl_cffi)
 
 ---
 
