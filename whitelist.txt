@@ -13,5 +13,5 @@
 ! gofile.io - File sharing service
 @@||gofile.io^
 
-! Unblock .family TLD
-||family^
+! Public family site
+@@||thedraper.family^
