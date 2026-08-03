@@ -152,14 +152,6 @@
     "maintainer_description": "Anti-Malware List"
   },
   {
-    "name": "Matomo Referrer Spam",
-    "url": "https://raw.githubusercontent.com/matomo-org/referrer-spam-blacklist/master/spammers.txt",
-    "nsfw": false,
-    "maintainer_name": "Matomo",
-    "maintainer_url": "https://github.com/matomo-org/referrer-spam-blacklist",
-    "maintainer_description": "Referrer spam blacklist"
-  },
-  {
     "name": "Prigent Ads",
     "url": "https://v.firebog.net/hosts/Prigent-Ads.txt",
     "nsfw": false,
