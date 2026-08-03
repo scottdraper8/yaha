@@ -3,9 +3,9 @@ build-backend = "hatchling.build"
 requires = [ "hatchling==1.30.1" ]
 
 [project]
-name = "yaha"
+name = "host-judge"
 version = "2.0.0"
-description = "Host-list provenance analyzer and whitelist workspace"
+description = "Host-list relevance monitor and whitelist workspace"
 readme = "README.md"
 keywords = [ "adblock", "blocklist", "dns", "hosts", "privacy" ]
 
@@ -20,10 +20,10 @@ classifiers = [
   "Programming Language :: Python :: 3.14",
 ]
 dependencies = [ "curl-cffi==0.15" ]
-urls.Homepage = "https://github.com/scottdraper8/yaha"
-urls.Issues = "https://github.com/scottdraper8/yaha/issues"
-urls.Repository = "https://github.com/scottdraper8/yaha"
-scripts.yaha = "src.cli:main"
+urls.Homepage = "https://github.com/scottdraper8/host-judge"
+urls.Issues = "https://github.com/scottdraper8/host-judge/issues"
+urls.Repository = "https://github.com/scottdraper8/host-judge"
+scripts."host-judge" = "src.cli:main"
 
 [dependency-groups]
 dev = [

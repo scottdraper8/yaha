@@ -18,7 +18,7 @@ from src.url_security import URLSecurityError, resolve_public_addresses, validat
 
 CONNECT_TIMEOUT_SECONDS = 10
 READ_TIMEOUT_SECONDS = 90
-MAX_FETCH_ATTEMPTS = 3
+MAX_FETCH_ATTEMPTS = 5
 RETRY_DELAY_SECONDS = 2
 MAX_REDIRECTS = 5
 MAX_SOURCE_BYTES = 512 * 1024 * 1024

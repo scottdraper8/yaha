@@ -17,7 +17,7 @@
   },
   {
     "name": "HaGeZi Multi-pro Extended",
-    "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt",
+    "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.txt",
     "nsfw": false,
     "maintainer_name": "HaGeZi",
     "maintainer_url": "https://github.com/hagezi/dns-blocklists",
@@ -25,7 +25,7 @@
   },
   {
     "name": "HaGeZi Threat Intelligence",
-    "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt",
+    "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/tif.txt",
     "nsfw": false,
     "maintainer_name": "HaGeZi",
     "maintainer_url": "https://github.com/hagezi/dns-blocklists",
@@ -158,14 +158,6 @@
     "maintainer_name": "Firebog",
     "maintainer_url": "https://firebog.net/",
     "maintainer_description": "RPiList Phishing/Malware, Prigent collections, AdGuard DNS, EasyPrivacy"
-  },
-  {
-    "name": "Stalkerware Indicators",
-    "url": "https://raw.githubusercontent.com/AssoEchap/stalkerware-indicators/master/generated/hosts",
-    "nsfw": false,
-    "maintainer_name": "AssoEchap",
-    "maintainer_url": "https://github.com/AssoEchap/stalkerware-indicators",
-    "maintainer_description": "Stalkerware indicators"
   },
   {
     "name": "Phishing Hosts",

@@ -1,8 +1,8 @@
 <div align="center">
 
-# YAHA - Yet Another Host Aggregator
+# Host Judge
 
-[![Analyze Host Lists](https://img.shields.io/github/actions/workflow/status/scottdraper8/yaha/analyze-host-lists.yml?label=Analyze%20Host%20Lists&logo=github&logoColor=white&color=50fa7b&labelColor=6272a4)](https://github.com/scottdraper8/yaha/actions/workflows/analyze-host-lists.yml)
+[![Analyze Host Lists](https://img.shields.io/github/actions/workflow/status/scottdraper8/host-judge/analyze-host-lists.yml?label=Analyze%20Host%20Lists&logo=github&logoColor=white&labelColor=6272a4)](https://github.com/scottdraper8/host-judge/actions/workflows/analyze-host-lists.yml)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-bd93f9?logo=python&logoColor=white&labelColor=6272a4)](https://www.python.org/downloads/)
 [![uv](https://img.shields.io/badge/uv-managed-ff79c6?logo=astral&logoColor=white&labelColor=6272a4)](https://docs.astral.sh/uv/)
 [![pre-commit](https://img.shields.io/badge/pre--commit-4.6-f1fa8c?logo=pre-commit&logoColor=282a36&labelColor=6272a4)](https://github.com/pre-commit/pre-commit)
@@ -10,10 +10,8 @@
 
 ---
 
-Host-file analyzer and whitelist workspace. Aggregates configured
-lists for normalization, deduplication, and provenance analysis.
-
-*Used for personal pi-hole management.*
+Host-list relevance monitor and whitelist workspace. Tracks configured
+sources for staleness, unique contribution, and removal-candidate analysis.
 
 ---
 
@@ -21,14 +19,10 @@ lists for normalization, deduplication, and provenance analysis.
 
 ## Purpose
 
-YAHA polls the configured host lists weekly and publishes analytics to this
+Host Judge polls the configured host lists weekly and publishes analytics to this
 README. It measures how many domains each source uniquely contributes and flags
 sources as removal candidates when they contribute 50 or fewer unique domains or
 show no observed content change for 30 days.
-
-This repository intentionally does **not** compile or publish installable host
-lists. Others are welcome to fork the project and adapt the analysis and
-whitelist to their own devices.
 
 The repository-level [`whitelist.txt`](whitelist.txt) is applied before domain
 counts and contribution statistics are calculated, so the report reflects the
@@ -47,9 +41,9 @@ analysis state; it does not generate or publish a combined host list.
 
 <div align="center">
 
-![General Domains](https://img.shields.io/badge/General_Domains-6,329,495-8be9fd?style=for-the-badge&labelColor=6272a4)
-![Total Domains](https://img.shields.io/badge/Total_Domains_(with_NSFW)-11,228,390-ff79c6?style=for-the-badge&labelColor=6272a4)
-![Last Updated](https://img.shields.io/badge/Last_Updated-2026--07--26_06:11:20_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
+![General Domains](https://img.shields.io/badge/General_Domains-5,998,828-8be9fd?style=for-the-badge&labelColor=6272a4)
+![Total Domains](https://img.shields.io/badge/Total_Domains_(with_NSFW)-10,937,643-ff79c6?style=for-the-badge&labelColor=6272a4)
+![Last Updated](https://img.shields.io/badge/Last_Updated-2026--08--03_15:05:58_UTC-50fa7b?style=for-the-badge&labelColor=6272a4)
 
 ### General Host Lists
 
@@ -64,26 +58,25 @@ analysis state; it does not generate or publish a combined host list.
 </tr>
 </thead>
 <tbody>
-<tr><td><a href="https://raw.githubusercontent.com/hagezi/nrd/main/adblock/dga30.txt">HaGeZi DGA 30 Days</a></td><td>2,431,266</td><td>2,315,576</td><td>No</td></tr>
-<tr><td><a href="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/tif.txt">HaGeZi Threat Intelligence</a></td><td>2,293,709</td><td>1,824,842</td><td>No</td></tr>
-<tr><td><a href="https://v.firebog.net/hosts/RPiList-Malware.txt">RPiList Malware</a></td><td>1,051,737</td><td>832,495</td><td>No</td></tr>
-<tr><td><a href="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt">HaGeZi Multi-pro Extended</a></td><td>542,424</td><td>370,833</td><td>No</td></tr>
-<tr><td><a href="https://raw.githubusercontent.com/RooneyMcNibNug/pihole-stuff/master/SNAFU.txt">SNAFU</a></td><td>74,749</td><td>70,822</td><td>No</td></tr>
-<tr><td><a href="https://v.firebog.net/hosts/AdguardDNS.txt">AdGuard DNS Filter</a></td><td>158,861</td><td>60,232</td><td>No</td></tr>
-<tr><td><a href="https://big.oisd.nl">OISD Big List</a></td><td>334,030</td><td>59,545</td><td>No</td></tr>
-<tr><td><a href="https://lists.cyberhost.uk/malware.txt">Cyber Threat Coalition Malware</a></td><td>63,384</td><td>41,662</td><td>No</td></tr>
-<tr><td><a href="https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts">Steven Black&#x27;s Unified Hosts</a></td><td>93,155</td><td>18,713</td><td>No</td></tr>
-<tr><td><a href="https://v.firebog.net/hosts/RPiList-Phishing.txt">RPiList Phishing</a></td><td>154,292</td><td>13,826</td><td>No</td></tr>
-<tr><td><a href="https://v.firebog.net/hosts/Easyprivacy.txt">EasyPrivacy</a></td><td>42,654</td><td>13,165</td><td>No</td></tr>
-<tr><td><a href="https://hostfiles.frogeye.fr/firstparty-trackers-hosts.txt">First-Party Trackers</a></td><td>14,709</td><td>11,175</td><td>No</td></tr>
-<tr><td><a href="https://v.firebog.net/hosts/Prigent-Crypto.txt">Prigent Crypto</a></td><td>11,491</td><td>10,848</td><td>No</td></tr>
-<tr><td><a href="https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts">hostsVN</a></td><td>18,298</td><td>4,176</td><td>No</td></tr>
-<tr><td><a href="https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts.txt">KADhosts</a></td><td>60,146</td><td>2,808</td><td>No</td></tr>
-<tr><td><a href="https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareHosts.txt">DandelionSprout Anti-Malware</a></td><td>12,329</td><td>2,128</td><td>No</td></tr>
-<tr><td><a href="https://v.firebog.net/hosts/Prigent-Ads.txt">Prigent Ads</a></td><td>4,270</td><td>1,504</td><td>No</td></tr>
-<tr><td><a href="https://malware-filter.gitlab.io/malware-filter/phishing-filter-hosts.txt">Phishing Hosts</a></td><td>32,511</td><td>1,299</td><td>No</td></tr>
-<tr><td><a href="https://raw.githubusercontent.com/matomo-org/referrer-spam-blacklist/master/spammers.txt">Matomo Referrer Spam</a></td><td>2,343</td><td>982</td><td>No</td></tr>
-<tr><td><a href="https://raw.githubusercontent.com/AssoEchap/stalkerware-indicators/master/generated/hosts">Stalkerware Indicators</a></td><td>925</td><td>386</td><td><strong>Yes</strong> — unchanged 34 days</td></tr>
+<tr><td><a href="https://raw.githubusercontent.com/hagezi/nrd/main/adblock/dga30.txt">HaGeZi DGA 30 Days</a></td><td>2,431,024</td><td>2,321,648</td><td>No</td></tr>
+<tr><td><a href="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/tif.txt">HaGeZi Threat Intelligence</a></td><td>2,172,217</td><td>1,698,329</td><td>No</td></tr>
+<tr><td><a href="https://v.firebog.net/hosts/RPiList-Malware.txt">RPiList Malware</a></td><td>1,052,962</td><td>845,829</td><td>No</td></tr>
+<tr><td><a href="https://big.oisd.nl">OISD Big List</a></td><td>430,386</td><td>101,082</td><td>No</td></tr>
+<tr><td><a href="https://raw.githubusercontent.com/RooneyMcNibNug/pihole-stuff/master/SNAFU.txt">SNAFU</a></td><td>74,766</td><td>71,650</td><td>No</td></tr>
+<tr><td><a href="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.txt">HaGeZi Multi-pro Extended</a></td><td>217,475</td><td>64,236</td><td>No</td></tr>
+<tr><td><a href="https://v.firebog.net/hosts/AdguardDNS.txt">AdGuard DNS Filter</a></td><td>161,505</td><td>61,907</td><td>No</td></tr>
+<tr><td><a href="https://lists.cyberhost.uk/malware.txt">Cyber Threat Coalition Malware</a></td><td>67,244</td><td>46,584</td><td>No</td></tr>
+<tr><td><a href="https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts">Steven Black&#x27;s Unified Hosts</a></td><td>99,275</td><td>21,527</td><td>No</td></tr>
+<tr><td><a href="https://v.firebog.net/hosts/RPiList-Phishing.txt">RPiList Phishing</a></td><td>157,049</td><td>20,985</td><td>No</td></tr>
+<tr><td><a href="https://v.firebog.net/hosts/Easyprivacy.txt">EasyPrivacy</a></td><td>42,697</td><td>13,311</td><td>No</td></tr>
+<tr><td><a href="https://hostfiles.frogeye.fr/firstparty-trackers-hosts.txt">First-Party Trackers</a></td><td>14,547</td><td>11,479</td><td>No</td></tr>
+<tr><td><a href="https://v.firebog.net/hosts/Prigent-Crypto.txt">Prigent Crypto</a></td><td>11,491</td><td>10,871</td><td>No</td></tr>
+<tr><td><a href="https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts">hostsVN</a></td><td>18,343</td><td>5,889</td><td>No</td></tr>
+<tr><td><a href="https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts.txt">KADhosts</a></td><td>63,118</td><td>2,618</td><td>No</td></tr>
+<tr><td><a href="https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareHosts.txt">DandelionSprout Anti-Malware</a></td><td>12,329</td><td>2,297</td><td>No</td></tr>
+<tr><td><a href="https://malware-filter.gitlab.io/malware-filter/phishing-filter-hosts.txt">Phishing Hosts</a></td><td>34,552</td><td>2,233</td><td>No</td></tr>
+<tr><td><a href="https://v.firebog.net/hosts/Prigent-Ads.txt">Prigent Ads</a></td><td>4,270</td><td>1,517</td><td>No</td></tr>
+<tr><td><a href="https://raw.githubusercontent.com/matomo-org/referrer-spam-blacklist/master/spammers.txt">Matomo Referrer Spam</a></td><td>2,343</td><td>1,040</td><td><strong>Yes</strong> — unchanged 31 days</td></tr>
 </tbody>
 </table>
 <!-- markdownlint-enable MD013 -->
@@ -101,9 +94,9 @@ analysis state; it does not generate or publish a combined host list.
 </tr>
 </thead>
 <tbody>
-<tr><td><a href="https://v.firebog.net/hosts/Prigent-Adult.txt">Prigent Adult</a></td><td>4,590,338</td><td>4,423,602</td><td>No</td></tr>
-<tr><td><a href="https://nsfw.oisd.nl">OISD NSFW</a></td><td>437,672</td><td>252,908</td><td>No</td></tr>
-<tr><td><a href="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/nsfw.txt">HaGeZi NSFW</a></td><td>110,239</td><td>44,736</td><td>No</td></tr>
+<tr><td><a href="https://v.firebog.net/hosts/Prigent-Adult.txt">Prigent Adult</a></td><td>4,590,338</td><td>4,418,238</td><td>No</td></tr>
+<tr><td><a href="https://nsfw.oisd.nl">OISD NSFW</a></td><td>487,685</td><td>294,568</td><td>No</td></tr>
+<tr><td><a href="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/nsfw.txt">HaGeZi NSFW</a></td><td>107,085</td><td>42,096</td><td>No</td></tr>
 </tbody>
 </table>
 <!-- markdownlint-enable MD013 -->
@@ -131,8 +124,8 @@ analysis state; it does not generate or publish a combined host list.
 **Clone and setup:**
 
 ```bash
-git clone https://github.com/scottdraper8/yaha.git
-cd yaha
+git clone https://github.com/scottdraper8/host-judge.git
+cd host-judge
 uv sync
 ```
 
@@ -146,10 +139,10 @@ uv run pre-commit install
 
 ```bash
 # Analyze current sources (skips if nothing changed)
-uv run yaha
+uv run host-judge
 
 # Force a complete analysis
-uv run yaha --force
+uv run host-judge --force
 ```
 
 The analyzer fetches all configured sources, parses and normalizes domains,
@@ -159,7 +152,7 @@ and updates README statistics. It does not generate a combined host file.
 ### Project Structure
 
 ```text
-yaha/
+host-judge/
 ├── src/                     # Application source
 │   ├── cli.py               # Main orchestrator (business logic)
 │   ├── config.py            # Configuration loading and validation
@@ -239,7 +232,7 @@ In `src/fetcher.py`, adjust:
 
 - `CONNECT_TIMEOUT_SECONDS = 10`: Connection timeout per attempt
 - `READ_TIMEOUT_SECONDS = 90`: Read timeout per attempt
-- `MAX_FETCH_ATTEMPTS = 3`: Requests made before a source is reported unavailable
+- `MAX_FETCH_ATTEMPTS = 5`: Requests made before a source is reported unavailable
 - `MAX_SOURCE_BYTES = 512 MiB`: Maximum decoded body size for one source
 - `MAX_TOTAL_DOWNLOAD_BYTES = 2 GiB`: Shared download budget for one analysis
 - `MAX_LINE_BYTES = 4 KiB`: Maximum input line length
@@ -255,39 +248,3 @@ Sources are never removed automatically.
 > [!WARNING]
 > If you add many sources or experience rate limiting, reduce
 > `MAX_WORKERS` to control concurrency.
-
-## Security
-
-Dependencies, development tools, and CI runtimes are pinned, while `uv.lock`
-records artifact hashes. Dependabot is configured to open security updates but
-not routine version-update pull requests. GitHub Actions and pre-commit hooks
-use immutable commit SHAs.
-
-Remote lists are treated as untrusted input. Downloads are streamed with byte,
-line, redirect, destination, timeout, and aggregate limits. Generated analytics
-are published through a reviewable pull request rather than pushed directly to
-`main`.
-
-## Acknowledgments
-
-<!-- markdownlint-disable MD013 -->
-<!-- ACKNOWLEDGMENTS_START -->
-
-Thanks to the maintainers of all source blocklists:
-
-- <a href="https://github.com/AssoEchap/stalkerware-indicators">AssoEchap</a> - Stalkerware indicators
-- <a href="https://cyberthreatcoalition.org/">Cyber Threat Coalition</a> - Malware blocklist
-- <a href="https://github.com/DandelionSprout/adfilt">DandelionSprout</a> - Anti-Malware List
-- <a href="https://firebog.net/">Firebog</a> - RPiList Phishing/Malware, Prigent collections, AdGuard DNS, EasyPrivacy
-- <a href="https://hostfiles.frogeye.fr/">Frogeye</a> - First-party trackers
-- <a href="https://github.com/hagezi/dns-blocklists">HaGeZi</a> - Multi-pro, Threat Intelligence, DGA, and NSFW lists
-- <a href="https://gitlab.com/malware-filter/phishing-filter">Malware Filter</a> - Phishing filter
-- <a href="https://github.com/matomo-org/referrer-spam-blacklist">Matomo</a> - Referrer spam blacklist
-- <a href="https://oisd.nl/">OISD</a> - Big List &amp; NSFW blocklists
-- <a href="https://github.com/PolishFiltersTeam/KADhosts">Polish Filters Team</a> - KADhosts
-- <a href="https://github.com/RooneyMcNibNug/pihole-stuff">RooneyMcNibNug</a> - SNAFU
-- <a href="https://github.com/StevenBlack/hosts">Steven Black</a> - Unified hosts file
-- <a href="https://github.com/bigdargon/hostsVN">bigdargon</a> - hostsVN
-
-<!-- ACKNOWLEDGMENTS_END -->
-<!-- markdownlint-enable MD013 -->

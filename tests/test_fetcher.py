@@ -86,7 +86,7 @@ def test_transport_failure_is_wrapped_with_source_url(
 
     with pytest.raises(
         FetchError,
-        match=r"https://example.com/list after 3 attempts: timed out",
+        match=r"https://example.com/list after 5 attempts: timed out",
     ):
         fetch_url_with_hash("https://example.com/list", tmp_path / "source.list")
 
