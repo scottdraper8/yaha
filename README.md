@@ -2,7 +2,7 @@
 
 # Host Judge
 
-[![Analyze Host Lists](https://img.shields.io/github/actions/workflow/status/scottdraper8/host-judge/analyze-host-lists.yml?label=Analyze%20Host%20Lists&logo=github&logoColor=white&labelColor=6272a4)](https://github.com/scottdraper8/host-judge/actions/workflows/analyze-host-lists.yml)
+[![Analyze Host Lists](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fscottdraper8%2Fhost-judge%2Fbadges%2Fanalyze-host-lists.json&logo=github&logoColor=white&labelColor=6272a4)](https://github.com/scottdraper8/host-judge/actions/workflows/analyze-host-lists.yml)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-bd93f9?logo=python&logoColor=white&labelColor=6272a4)](https://www.python.org/downloads/)
 [![uv](https://img.shields.io/badge/uv-managed-ff79c6?logo=astral&logoColor=white&labelColor=6272a4)](https://docs.astral.sh/uv/)
 [![pre-commit](https://img.shields.io/badge/pre--commit-4.6-f1fa8c?logo=pre-commit&logoColor=282a36&labelColor=6272a4)](https://github.com/pre-commit/pre-commit)

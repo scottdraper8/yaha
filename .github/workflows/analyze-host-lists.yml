@@ -203,3 +203,69 @@ jobs:
           done
           echo "Required pull_request CI run was not created" >&2
           exit 1
+
+  report-status:
+    name: Publish status badge
+    needs: [analyze, publish]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Determine badge color
+        id: status
+        run: |
+          analyze_result="${{ needs.analyze.result }}"
+          publish_result="${{ needs.publish.result }}"
+          if [ "$analyze_result" = "success" ] \
+            && { [ "$publish_result" = "success" ] || [ "$publish_result" = "skipped" ]; }; then
+            echo "message=passing" >> "$GITHUB_OUTPUT"
+            echo "color=50fa7b" >> "$GITHUB_OUTPUT"
+          elif [ "$analyze_result" = "cancelled" ] || [ "$publish_result" = "cancelled" ]; then
+            echo "message=cancelled" >> "$GITHUB_OUTPUT"
+            echo "color=ffb86c" >> "$GITHUB_OUTPUT"
+          else
+            echo "message=failing" >> "$GITHUB_OUTPUT"
+            echo "color=ff5555" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish badge JSON to badges branch
+        env:
+          MESSAGE: ${{ steps.status.outputs.message }}
+          COLOR: ${{ steps.status.outputs.color }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git ls-remote --exit-code --heads origin badges >/dev/null 2>&1; then
+            git fetch origin badges
+            git switch badges
+          else
+            git switch --orphan badges
+          fi
+
+          git rm -rf --quiet . >/dev/null 2>&1 || true
+          printf '{"schemaVersion":1,"label":"Analyze Host Lists","message":"%s","color":"%s"}\n' \
+            "$MESSAGE" "$COLOR" > analyze-host-lists.json
+          git add analyze-host-lists.json
+
+          if git diff --cached --quiet; then
+            echo "No badge change"
+            exit 0
+          fi
+
+          git commit -m "Update Analyze Host Lists badge [automated]"
+          git push origin HEAD:badges
