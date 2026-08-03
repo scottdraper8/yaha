@@ -95,10 +95,7 @@ def test_readme_reports_removal_candidate_rules(
 ) -> None:
     """README output should expose candidacy and its concrete reasons."""
     monkeypatch.chdir(tmp_path)
-    Path("README.md").write_text(
-        "Header\n<!-- STATS_START -->old<!-- STATS_END -->\n"
-        "<!-- ACKNOWLEDGMENTS_START -->old<!-- ACKNOWLEDGMENTS_END -->\n"
-    )
+    Path("README.md").write_text("Header\n<!-- STATS_START -->old<!-- STATS_END -->\n")
     sources = [
         SourceConfig(name="Keep", url="https://example.com/keep"),
         SourceConfig(name="Candidate", url="https://example.com/candidate"),
@@ -130,16 +127,10 @@ def test_readme_escapes_configuration_values(
 ) -> None:
     """Configuration values cannot break generated HTML attributes or elements."""
     monkeypatch.chdir(tmp_path)
-    Path("README.md").write_text(
-        "Header\n<!-- STATS_START -->old<!-- STATS_END -->\n"
-        "<!-- ACKNOWLEDGMENTS_START -->old<!-- ACKNOWLEDGMENTS_END -->\n"
-    )
+    Path("README.md").write_text("Header\n<!-- STATS_START -->old<!-- STATS_END -->\n")
     source = SourceConfig(
         name='<script>alert("x")</script>',
         url="https://example.com/?a=1&b=2",
-        maintainer_name="Name <unsafe>",
-        maintainer_url="https://example.com/?a=1&b=2",
-        maintainer_description="Description <unsafe> & more",
     )
 
     update_readme(
@@ -159,4 +150,3 @@ def test_readme_escapes_configuration_values(
     assert "<script>" not in readme
     assert "&lt;script&gt;" in readme
     assert 'href="https://example.com/?a=1&amp;b=2"' in readme
-    assert "Description &lt;unsafe&gt; &amp; more" in readme

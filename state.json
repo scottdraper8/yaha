@@ -210,23 +210,6 @@
         "candidate_reasons": []
       }
     },
-    "Stalkerware Indicators": {
-      "url": "https://raw.githubusercontent.com/AssoEchap/stalkerware-indicators/master/generated/hosts",
-      "content_hash": "6e8928e0dc37b9fcf9c16ceda3c55d717dfc816b1d491becbf58cb71a5b734c8",
-      "last_fetch_date": "2026-07-26T06:11:20.688888+00:00",
-      "last_changed_date": "2026-06-22T02:35:32.022219+00:00",
-      "fetch_count": 315,
-      "change_count": 3,
-      "metadata": {
-        "domain_count": 925,
-        "unique_contribution": 386,
-        "removal_candidate": true,
-        "candidate_reasons": [
-          "unchanged 34 days"
-        ],
-        "stale_candidate_reported": true
-      }
-    },
     "Cyber Threat Coalition Malware": {
       "url": "https://lists.cyberhost.uk/malware.txt",
       "content_hash": "ec7dff942191be76c41d3685f11e5036e3dad12abdb1cb68742b18889ce119da",

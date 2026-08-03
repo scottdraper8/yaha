@@ -1,8 +1,8 @@
 <div align="center">
 
-# YAHA - Yet Another Host Aggregator
+# Host Judge
 
-[![Analyze Host Lists](https://img.shields.io/github/actions/workflow/status/scottdraper8/yaha/analyze-host-lists.yml?label=Analyze%20Host%20Lists&logo=github&logoColor=white&color=50fa7b&labelColor=6272a4)](https://github.com/scottdraper8/yaha/actions/workflows/analyze-host-lists.yml)
+[![Analyze Host Lists](https://img.shields.io/github/actions/workflow/status/scottdraper8/host-judge/analyze-host-lists.yml?label=Analyze%20Host%20Lists&logo=github&logoColor=white&labelColor=6272a4)](https://github.com/scottdraper8/host-judge/actions/workflows/analyze-host-lists.yml)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-bd93f9?logo=python&logoColor=white&labelColor=6272a4)](https://www.python.org/downloads/)
 [![uv](https://img.shields.io/badge/uv-managed-ff79c6?logo=astral&logoColor=white&labelColor=6272a4)](https://docs.astral.sh/uv/)
 [![pre-commit](https://img.shields.io/badge/pre--commit-4.6-f1fa8c?logo=pre-commit&logoColor=282a36&labelColor=6272a4)](https://github.com/pre-commit/pre-commit)
@@ -10,10 +10,8 @@
 
 ---
 
-Host-file analyzer and whitelist workspace. Aggregates configured
-lists for normalization, deduplication, and provenance analysis.
-
-*Used for personal pi-hole management.*
+Host-list relevance monitor and whitelist workspace. Tracks configured
+sources for staleness, unique contribution, and removal-candidate analysis.
 
 ---
 
@@ -21,14 +19,10 @@ lists for normalization, deduplication, and provenance analysis.
 
 ## Purpose
 
-YAHA polls the configured host lists weekly and publishes analytics to this
+Host Judge polls the configured host lists weekly and publishes analytics to this
 README. It measures how many domains each source uniquely contributes and flags
 sources as removal candidates when they contribute 50 or fewer unique domains or
 show no observed content change for 30 days.
-
-This repository intentionally does **not** compile or publish installable host
-lists. Others are welcome to fork the project and adapt the analysis and
-whitelist to their own devices.
 
 The repository-level [`whitelist.txt`](whitelist.txt) is applied before domain
 counts and contribution statistics are calculated, so the report reflects the
@@ -83,7 +77,6 @@ analysis state; it does not generate or publish a combined host list.
 <tr><td><a href="https://v.firebog.net/hosts/Prigent-Ads.txt">Prigent Ads</a></td><td>4,270</td><td>1,504</td><td>No</td></tr>
 <tr><td><a href="https://malware-filter.gitlab.io/malware-filter/phishing-filter-hosts.txt">Phishing Hosts</a></td><td>32,511</td><td>1,299</td><td>No</td></tr>
 <tr><td><a href="https://raw.githubusercontent.com/matomo-org/referrer-spam-blacklist/master/spammers.txt">Matomo Referrer Spam</a></td><td>2,343</td><td>982</td><td>No</td></tr>
-<tr><td><a href="https://raw.githubusercontent.com/AssoEchap/stalkerware-indicators/master/generated/hosts">Stalkerware Indicators</a></td><td>925</td><td>386</td><td><strong>Yes</strong> — unchanged 34 days</td></tr>
 </tbody>
 </table>
 <!-- markdownlint-enable MD013 -->
@@ -131,8 +124,8 @@ analysis state; it does not generate or publish a combined host list.
 **Clone and setup:**
 
 ```bash
-git clone https://github.com/scottdraper8/yaha.git
-cd yaha
+git clone https://github.com/scottdraper8/host-judge.git
+cd host-judge
 uv sync
 ```
 
@@ -146,10 +139,10 @@ uv run pre-commit install
 
 ```bash
 # Analyze current sources (skips if nothing changed)
-uv run yaha
+uv run host-judge
 
 # Force a complete analysis
-uv run yaha --force
+uv run host-judge --force
 ```
 
 The analyzer fetches all configured sources, parses and normalizes domains,
@@ -159,7 +152,7 @@ and updates README statistics. It does not generate a combined host file.
 ### Project Structure
 
 ```text
-yaha/
+host-judge/
 ├── src/                     # Application source
 │   ├── cli.py               # Main orchestrator (business logic)
 │   ├── config.py            # Configuration loading and validation
@@ -239,7 +232,7 @@ In `src/fetcher.py`, adjust:
 
 - `CONNECT_TIMEOUT_SECONDS = 10`: Connection timeout per attempt
 - `READ_TIMEOUT_SECONDS = 90`: Read timeout per attempt
-- `MAX_FETCH_ATTEMPTS = 3`: Requests made before a source is reported unavailable
+- `MAX_FETCH_ATTEMPTS = 5`: Requests made before a source is reported unavailable
 - `MAX_SOURCE_BYTES = 512 MiB`: Maximum decoded body size for one source
 - `MAX_TOTAL_DOWNLOAD_BYTES = 2 GiB`: Shared download budget for one analysis
 - `MAX_LINE_BYTES = 4 KiB`: Maximum input line length
@@ -255,39 +248,3 @@ Sources are never removed automatically.
 > [!WARNING]
 > If you add many sources or experience rate limiting, reduce
 > `MAX_WORKERS` to control concurrency.
-
-## Security
-
-Dependencies, development tools, and CI runtimes are pinned, while `uv.lock`
-records artifact hashes. Dependabot is configured to open security updates but
-not routine version-update pull requests. GitHub Actions and pre-commit hooks
-use immutable commit SHAs.
-
-Remote lists are treated as untrusted input. Downloads are streamed with byte,
-line, redirect, destination, timeout, and aggregate limits. Generated analytics
-are published through a reviewable pull request rather than pushed directly to
-`main`.
-
-## Acknowledgments
-
-<!-- markdownlint-disable MD013 -->
-<!-- ACKNOWLEDGMENTS_START -->
-
-Thanks to the maintainers of all source blocklists:
-
-- <a href="https://github.com/AssoEchap/stalkerware-indicators">AssoEchap</a> - Stalkerware indicators
-- <a href="https://cyberthreatcoalition.org/">Cyber Threat Coalition</a> - Malware blocklist
-- <a href="https://github.com/DandelionSprout/adfilt">DandelionSprout</a> - Anti-Malware List
-- <a href="https://firebog.net/">Firebog</a> - RPiList Phishing/Malware, Prigent collections, AdGuard DNS, EasyPrivacy
-- <a href="https://hostfiles.frogeye.fr/">Frogeye</a> - First-party trackers
-- <a href="https://github.com/hagezi/dns-blocklists">HaGeZi</a> - Multi-pro, Threat Intelligence, DGA, and NSFW lists
-- <a href="https://gitlab.com/malware-filter/phishing-filter">Malware Filter</a> - Phishing filter
-- <a href="https://github.com/matomo-org/referrer-spam-blacklist">Matomo</a> - Referrer spam blacklist
-- <a href="https://oisd.nl/">OISD</a> - Big List &amp; NSFW blocklists
-- <a href="https://github.com/PolishFiltersTeam/KADhosts">Polish Filters Team</a> - KADhosts
-- <a href="https://github.com/RooneyMcNibNug/pihole-stuff">RooneyMcNibNug</a> - SNAFU
-- <a href="https://github.com/StevenBlack/hosts">Steven Black</a> - Unified hosts file
-- <a href="https://github.com/bigdargon/hostsVN">bigdargon</a> - hostsVN
-
-<!-- ACKNOWLEDGMENTS_END -->
-<!-- markdownlint-enable MD013 -->

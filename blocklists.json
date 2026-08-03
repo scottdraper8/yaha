@@ -168,14 +168,6 @@
     "maintainer_description": "RPiList Phishing/Malware, Prigent collections, AdGuard DNS, EasyPrivacy"
   },
   {
-    "name": "Stalkerware Indicators",
-    "url": "https://raw.githubusercontent.com/AssoEchap/stalkerware-indicators/master/generated/hosts",
-    "nsfw": false,
-    "maintainer_name": "AssoEchap",
-    "maintainer_url": "https://github.com/AssoEchap/stalkerware-indicators",
-    "maintainer_description": "Stalkerware indicators"
-  },
-  {
     "name": "Phishing Hosts",
     "url": "https://malware-filter.gitlab.io/malware-filter/phishing-filter-hosts.txt",
     "nsfw": false,

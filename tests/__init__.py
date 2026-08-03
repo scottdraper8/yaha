@@ -1,1 +1,1 @@
-"""YAHA test suite."""
+"""Host Judge test suite."""

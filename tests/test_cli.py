@@ -1,4 +1,4 @@
-"""Tests for YAHA-specific reporting rules."""
+"""Tests for Host Judge-specific reporting rules."""
 
 from src.cli import get_candidate_reasons
 
