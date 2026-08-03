@@ -1,4 +1,4 @@
-"""Configuration loading for YAHA.
+"""Configuration loading for Host Judge.
 
 Handles loading and validation of source configurations from blocklists.json
 and whitelist from whitelist.txt.

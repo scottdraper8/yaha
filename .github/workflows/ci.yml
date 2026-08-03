@@ -55,7 +55,7 @@ jobs:
 
       - name: Audit locked Python dependencies
         run: |
-          audit_file="$RUNNER_TEMP/yaha-audit-requirements.txt"
+          audit_file="$RUNNER_TEMP/host-judge-audit-requirements.txt"
           uv export --locked --all-groups --no-emit-project \
             --format requirements.txt --output-file "$audit_file" >/dev/null
           uv run --group audit pip-audit \

@@ -23,7 +23,7 @@ class PipelineFiles:
     @classmethod
     def create(cls, base_dir: Path | None = None) -> PipelineFiles:
         """Create a private, unique temporary directory for one pipeline run."""
-        root = Path(tempfile.mkdtemp(prefix="yaha-", dir=base_dir))
+        root = Path(tempfile.mkdtemp(prefix="host-judge-", dir=base_dir))
         root.chmod(0o700)
         return cls(
             root=root,

@@ -1,4 +1,4 @@
-"""State management for YAHA.
+"""State management for Host Judge.
 
 Handles persistence of analysis state, change detection, and source health checks.
 """

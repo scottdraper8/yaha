@@ -41,7 +41,7 @@ jobs:
         run: uv sync --locked --no-dev
 
       - name: Run host-list analysis
-        run: uv run --frozen --no-dev yaha --force
+        run: uv run --frozen --no-dev host-judge --force
 
       - name: Validate generated state
         run: |
@@ -71,7 +71,7 @@ jobs:
       - name: Generate workflow summary
         if: always()
         run: |
-          echo "## YAHA Host-List Analysis" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Host Judge Analysis" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "| Metric | Value |" >> "$GITHUB_STEP_SUMMARY"
           echo "|---|---:|" >> "$GITHUB_STEP_SUMMARY"

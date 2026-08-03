@@ -1,4 +1,4 @@
-"""CLI orchestrator for YAHA.
+"""CLI orchestrator for Host Judge.
 
 Main entry point that knows all business logic:
 - Fetching and normalizing configured host lists
@@ -241,50 +241,8 @@ def update_readme(
         content[:stats_start] + stats_section + content[stats_end + len("<!-- STATS_END -->") :]
     )
 
-    ack_start = new_content.find("<!-- ACKNOWLEDGMENTS_START -->")
-    ack_end = new_content.find("<!-- ACKNOWLEDGMENTS_END -->")
-
-    if ack_start != -1 and ack_end != -1:
-        acknowledgments = build_acknowledgments(sources)
-        ack_section = f"""<!-- ACKNOWLEDGMENTS_START -->
-
-Thanks to the maintainers of all source blocklists:
-
-{acknowledgments}
-
-<!-- ACKNOWLEDGMENTS_END -->"""
-
-        new_content = (
-            new_content[:ack_start]
-            + ack_section
-            + new_content[ack_end + len("<!-- ACKNOWLEDGMENTS_END -->") :]
-        )
-
     readme_path.write_text(new_content, encoding="utf-8")
     print("Updated README.md with host-list analytics")
-
-
-def build_acknowledgments(sources: list[SourceConfig]) -> str:
-    """Build acknowledgments list from active sources."""
-    maintainers: dict[str, tuple[str, str]] = {}
-
-    for source in sources:
-        if source.maintainer_name and source.maintainer_url and source.maintainer_description:
-            maintainers.setdefault(
-                source.maintainer_name,
-                (source.maintainer_url, source.maintainer_description),
-            )
-
-    sorted_maintainers = sorted(maintainers.items())
-
-    lines = []
-    for name, (url, description) in sorted_maintainers:
-        safe_name = html.escape(name, quote=True)
-        safe_url = html.escape(url, quote=True)
-        safe_description = html.escape(description, quote=True)
-        lines.append(f'- <a href="{safe_url}">{safe_name}</a> - {safe_description}')
-
-    return "\n".join(lines) if lines else "No maintainer information available."
 
 
 def main() -> int:
@@ -295,7 +253,7 @@ def main() -> int:
         Exit code: 0 on success, 1 on error
     """
     parser = argparse.ArgumentParser(
-        description="YAHA - Host-List Analyzer",
+        description="Host Judge - Host-List Analyzer",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
@@ -305,7 +263,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    print("YAHA - Host-List Analyzer")
+    print("Host Judge - Host-List Analyzer")
     print("=" * 50)
 
     current_time = datetime.now(UTC)

@@ -1,4 +1,4 @@
-"""Pytest fixtures for YAHA test suite."""
+"""Pytest fixtures for Host Judge test suite."""
 
 import pytest
 
