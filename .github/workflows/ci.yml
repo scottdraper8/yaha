@@ -41,15 +41,6 @@ jobs:
       - name: Run pre-commit checks
         run: uv run pre-commit run --all-files
 
-      - name: Lint
-        run: uv run ruff check src tests
-
-      - name: Check formatting
-        run: uv run ruff format --check src tests
-
-      - name: Type check
-        run: uv run mypy src
-
       - name: Test
         run: uv run pytest
 
